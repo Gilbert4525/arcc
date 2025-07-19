@@ -50,6 +50,7 @@ import {
   Search,
   Download,
   Eye,
+  EyeOff,
   Edit,
   Trash2,
   FileText,
@@ -329,64 +330,88 @@ export function DocumentManagement({
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-4">
-          <div className="flex-1 max-w-sm relative">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 flex-1">
+          <div className="flex-1 sm:max-w-sm relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search documents..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
+              className="pl-9 w-full"
             />
           </div>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map(category => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex space-x-2 sm:space-x-4">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="unpublished">Unpublished</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="unpublished">Unpublished</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="flex space-x-2">
-          <Button
-            variant={viewMode === 'table' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('table')}
-          >
-            Table
-          </Button>
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('grid')}
-          >
-            Grid
-          </Button>
+        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+          <div className="flex space-x-2 sm:hidden">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className="flex-1"
+            >
+              Table
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="flex-1"
+            >
+              Grid
+            </Button>
+          </div>
 
-          <Button asChild>
+          <div className="hidden sm:flex sm:space-x-2">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+            >
+              Table
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              Grid
+            </Button>
+          </div>
+
+          <Button asChild className="w-full sm:w-auto">
             <a href="/dashboard/documents/upload">
               <Upload className="mr-2 h-4 w-4" />
-              Upload Document
+              <span className="hidden sm:inline">Upload Document</span>
+              <span className="sm:hidden">Upload</span>
             </a>
           </Button>
         </div>
@@ -396,10 +421,117 @@ export function DocumentManagement({
       {viewMode === 'table' ? (
         <Card>
           <CardHeader>
-            <CardTitle>Documents ({filteredDocuments.length})</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Documents ({filteredDocuments.length})</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Table>
+          <CardContent className="p-0 sm:p-6">
+            {/* Mobile Card View */}
+            <div className="block sm:hidden">
+              {filteredDocuments.map((document) => {
+                const FileIcon = getFileIcon(document.file_type);
+                return (
+                  <div key={document.id} className="border-b border-gray-200 p-4 space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <FileIcon className="h-6 w-6 text-muted-foreground mt-1 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-sm truncate">{document.title}</h3>
+                        <p className="text-xs text-muted-foreground truncate">{document.filename}</p>
+                        {document.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {document.description.substring(0, 80)}
+                            {document.description.length > 80 && '...'}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end space-y-1">
+                        <Badge variant={document.is_published ? 'default' : 'secondary'} className="text-xs">
+                          {document.is_published ? 'Published' : 'Draft'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatFileSize(document.file_size)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {document.tags && document.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {document.tags.slice(0, 2).map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {document.tags.length > 2 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{document.tags.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center">
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(document.created_at || new Date()), 'MMM d, yyyy')}
+                      </div>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePreview(document)}
+                          className="h-8 px-2"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(document)}
+                          className="h-8 px-2"
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                        {userRole === 'admin' && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTogglePublished(document.id, !document.is_published)}
+                              className="h-8 px-2"
+                            >
+                              {document.is_published ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 px-2">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Document</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete &quot;{document.title}&quot;?
+                                    This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteDocument(document.id, document.file_path)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Document</TableHead>
@@ -580,6 +712,7 @@ export function DocumentManagement({
                 })}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       ) : (

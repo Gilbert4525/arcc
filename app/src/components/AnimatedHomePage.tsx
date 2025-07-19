@@ -95,7 +95,7 @@ export default function AnimatedHomePage() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <h1 className="text-2xl font-bold gradient-text">
+                  <h1 className="text-xl sm:text-2xl font-bold gradient-text">
                     BoardMix
                   </h1>
                 </div>
@@ -124,10 +124,15 @@ export default function AnimatedHomePage() {
                 </div>
               </div>
 
-              {/* Mobile menu button */}
-              <div className="md:hidden">
+              {/* Mobile menu */}
+              <div className="md:hidden flex items-center space-x-2">
                 <Link href="/auth/login">
-                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                  <Button variant="outline" size="sm" className="text-xs px-2">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/auth/login">
+                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-xs px-3">
                     Join
                   </Button>
                 </Link>
@@ -137,9 +142,9 @@ export default function AnimatedHomePage() {
         </nav>
 
         {/* Hero Section with Animated Cards */}
-        <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative">
-          {/* Floating animated cards in background */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 relative">
+          {/* Floating animated cards in background - Hidden on mobile */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none hidden lg:block">
             <div className="absolute top-20 left-10 animate-float glass-effect rounded-2xl p-6 w-80 h-48 opacity-80">
               <div className="flex items-center justify-between mb-4">
                 <div className="text-2xl font-bold text-gray-800">98.7%</div>
@@ -183,14 +188,14 @@ export default function AnimatedHomePage() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center">
               <div className="animate-fade-up">
-                <Badge variant="secondary" className="mb-6 bg-blue-100/80 text-blue-700 hover:bg-blue-200/80 backdrop-blur-sm">
+                <Badge variant="secondary" className="mb-4 sm:mb-6 bg-blue-100/80 text-blue-700 hover:bg-blue-200/80 backdrop-blur-sm text-xs sm:text-sm">
                   <Zap className="w-3 h-3 mr-1" />
                   It&apos;s time you own your board operations
                 </Badge>
               </div>
 
               <div className="animate-slide-left">
-                <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight px-2">
                   It&apos;s time you own
                   <br />
                   <span className="gradient-text">your governance</span>
@@ -198,7 +203,7 @@ export default function AnimatedHomePage() {
               </div>
 
               <div className="animate-slide-right">
-                <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
                   Every year. Starting with 160+ board processes and insights from
                   top governance professionals. All for just $499.
                 </p>
@@ -206,7 +211,7 @@ export default function AnimatedHomePage() {
 
               <div className="animate-fade-up" style={{ animationDelay: '0.5s' }}>
                 <Link href="/auth/login">
-                  <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-12 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                  <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl w-full sm:w-auto max-w-xs sm:max-w-none">
                     Start testing
                   </Button>
                 </Link>
@@ -216,25 +221,25 @@ export default function AnimatedHomePage() {
         </section>
 
         {/* Moving Text Banner */}
-        <section className="py-8 bg-white/50 backdrop-blur-sm border-y border-gray-200/50 overflow-hidden">
+        <section className="py-6 sm:py-8 bg-white/50 backdrop-blur-sm border-y border-gray-200/50 overflow-hidden">
           <div className="whitespace-nowrap">
             <div className="animate-marquee inline-block">
-              <span className="text-lg text-gray-600 mx-8">Monitor for early indicators of</span>
-              <span className="text-lg font-semibold text-orange-600 mx-4">thousands of governance issues.</span>
-              <span className="text-lg text-gray-600 mx-8">Board Efficiency</span>
-              <span className="text-lg text-gray-600 mx-8">Meeting Management</span>
-              <span className="text-lg text-gray-600 mx-8">Document Control</span>
-              <span className="text-lg text-gray-600 mx-8">Resolution Tracking</span>
-              <span className="text-lg text-gray-600 mx-8">Compliance Monitoring</span>
-              <span className="text-lg text-gray-600 mx-8">Audit Trails</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Monitor for early indicators of</span>
+              <span className="text-sm sm:text-base lg:text-lg font-semibold text-orange-600 mx-2 sm:mx-4">thousands of governance issues.</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Board Efficiency</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Meeting Management</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Document Control</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Resolution Tracking</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Compliance Monitoring</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Audit Trails</span>
             </div>
           </div>
         </section>
 
         {/* Animated Feature Pills */}
-        <section className="py-16 bg-gradient-to-br from-gray-50/80 to-blue-50/80 backdrop-blur-sm">
+        <section className="py-12 sm:py-16 bg-gradient-to-br from-gray-50/80 to-blue-50/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12">
               {[
                 'Document Management', 'Meeting Coordination', 'Resolution Tracking',
                 'Compliance Monitoring', 'Audit Trails', 'Digital Voting',
@@ -242,7 +247,7 @@ export default function AnimatedHomePage() {
               ].map((feature, index) => (
                 <div
                   key={feature}
-                  className="animate-fade-up glass-effect rounded-full px-6 py-3 text-sm font-medium text-gray-700 hover:scale-105 transition-all duration-300 cursor-pointer"
+                  className="animate-fade-up glass-effect rounded-full px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 hover:scale-105 transition-all duration-300 cursor-pointer"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {feature}
@@ -250,45 +255,45 @@ export default function AnimatedHomePage() {
               ))}
             </div>
 
-            {/* Animated eye images placeholder */}
-            <div className="grid md:grid-cols-3 gap-8 mb-16">
-              <div className="animate-slide-left glass-effect rounded-2xl p-8 text-center hover:scale-105 transition-all duration-500">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
-                  <FileText className="w-8 h-8 text-white" />
+            {/* Animated feature cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+              <div className="animate-slide-left glass-effect rounded-2xl p-6 sm:p-8 text-center hover:scale-105 transition-all duration-500">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
+                  <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Document Intelligence</h3>
-                <p className="text-gray-600">AI-powered document analysis and automated categorization</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">Document Intelligence</h3>
+                <p className="text-gray-600 text-sm sm:text-base">AI-powered document analysis and automated categorization</p>
               </div>
 
-              <div className="animate-fade-up glass-effect rounded-2xl p-8 text-center hover:scale-105 transition-all duration-500" style={{ animationDelay: '0.2s' }}>
-                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
-                  <Users className="w-8 h-8 text-white" />
+              <div className="animate-fade-up glass-effect rounded-2xl p-6 sm:p-8 text-center hover:scale-105 transition-all duration-500" style={{ animationDelay: '0.2s' }}>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
+                  <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Smart Collaboration</h3>
-                <p className="text-gray-600">Real-time collaboration with intelligent workflow automation</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">Smart Collaboration</h3>
+                <p className="text-gray-600 text-sm sm:text-base">Real-time collaboration with intelligent workflow automation</p>
               </div>
 
-              <div className="animate-slide-right glass-effect rounded-2xl p-8 text-center hover:scale-105 transition-all duration-500" style={{ animationDelay: '0.4s' }}>
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
-                  <BarChart3 className="w-8 h-8 text-white" />
+              <div className="animate-slide-right glass-effect rounded-2xl p-6 sm:p-8 text-center hover:scale-105 transition-all duration-500 sm:col-span-2 lg:col-span-1" style={{ animationDelay: '0.4s' }}>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
+                  <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Governance Analytics</h3>
-                <p className="text-gray-600">Deep insights into board performance and decision patterns</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">Governance Analytics</h3>
+                <p className="text-gray-600 text-sm sm:text-base">Deep insights into board performance and decision patterns</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* Results Tracking Section */}
-        <section className="py-20 bg-white/80 backdrop-blur-sm">
+        <section className="py-12 sm:py-20 bg-white/80 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="animate-fade-up">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
                 Results tracked
                 <br />
                 over your <span className="gradient-text">lifetime.</span>
               </h2>
-              <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
                 Stay aware of how your board is changing.
                 <br />
                 Results stored in one secure place
@@ -297,21 +302,21 @@ export default function AnimatedHomePage() {
               </p>
             </div>
 
-            <div className="animate-slide-left mt-16">
-              <Badge variant="outline" className="mb-8 text-gray-600 border-gray-300">
+            <div className="animate-slide-left mt-8 sm:mt-16">
+              <Badge variant="outline" className="mb-6 sm:mb-8 text-gray-600 border-gray-300 text-xs sm:text-sm">
                 Results Tracking
               </Badge>
 
               {/* Animated chart placeholder */}
-              <div className="glass-effect rounded-3xl p-12 max-w-2xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
+              <div className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-12 max-w-2xl mx-auto">
+                <div className="flex items-center justify-between mb-6 sm:mb-8">
                   <div className="text-left">
-                    <div className="text-sm text-gray-600 mb-1">Board Efficiency Score</div>
+                    <div className="text-xs sm:text-sm text-gray-600 mb-1">Board Efficiency Score</div>
                     <div className="text-xs text-gray-500">Optimal Range: 85 to 95 points</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-4xl font-bold text-orange-600 animate-pulse-slow">92</div>
-                    <div className="text-sm text-gray-600">points</div>
+                    <div className="text-2xl sm:text-4xl font-bold text-orange-600 animate-pulse-slow">92</div>
+                    <div className="text-xs sm:text-sm text-gray-600">points</div>
                   </div>
                 </div>
 
@@ -330,41 +335,41 @@ export default function AnimatedHomePage() {
         </section>
 
         {/* Membership Section */}
-        <section className="py-20 bg-gradient-to-br from-slate-50/80 to-gray-100/80 backdrop-blur-sm">
+        <section className="py-12 sm:py-20 bg-gradient-to-br from-slate-50/80 to-gray-100/80 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-16 items-center">
-              <div className="animate-slide-left">
-                <div className="glass-effect rounded-3xl p-12">
-                  <div className="mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                      <Building className="w-8 h-8 text-white" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-16 items-center">
+              <div className="animate-slide-left order-2 md:order-1">
+                <div className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-12">
+                  <div className="mb-6 sm:mb-8">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6">
+                      <Building className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
                       BoardMix
                       <br />
                       Membership
                     </h3>
-                    <p className="text-gray-600 mb-8">It&apos;s time you own your governance.</p>
+                    <p className="text-gray-600 mb-6 sm:mb-8">It&apos;s time you own your governance.</p>
                   </div>
 
-                  <div className="mb-8">
-                    <div className="text-5xl font-bold text-gray-900 mb-2">$42</div>
+                  <div className="mb-6 sm:mb-8">
+                    <div className="text-3xl sm:text-5xl font-bold text-gray-900 mb-2">$42</div>
                     <div className="text-gray-600">/month</div>
                     <div className="text-sm text-gray-500">Charged annually at $499</div>
                   </div>
 
-                  <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-4 text-lg font-semibold transition-all duration-300 hover:scale-105">
+                  <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 sm:py-4 text-base sm:text-lg font-semibold transition-all duration-300 hover:scale-105">
                     Start testing
                   </Button>
                 </div>
               </div>
 
-              <div className="animate-slide-right space-y-8">
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
+              <div className="animate-slide-right space-y-6 sm:space-y-8 order-1 md:order-2">
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">160+ governance processes yearly</h4>
-                    <p className="text-gray-600 text-sm">
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">160+ governance processes yearly</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm">
                       The full cost of governance is included. With advanced processes
                       typically not covered by traditional tools. 5x more processes than
                       an avg board platform.
@@ -372,11 +377,11 @@ export default function AnimatedHomePage() {
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Expert Insights / Secretary&apos;s Summary</h4>
-                    <p className="text-gray-600 text-sm">
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Expert Insights / Secretary&apos;s Summary</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm">
                       Get insights from top secretaries and 1000s of hours of
                       research based on your results. Read your Secretary&apos;s
                       Summary written by our expert team after every analysis.
@@ -385,22 +390,22 @@ export default function AnimatedHomePage() {
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Lifetime tracking of results</h4>
-                    <p className="text-gray-600 text-sm">
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Lifetime tracking of results</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm">
                       Results charted over time in one secure place for easy
                       access. Share with advisors anytime.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4">
-                  <CheckCircle className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Testing at Premium Locations</h4>
-                    <p className="text-gray-600 text-sm">
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Testing at Premium Locations</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm">
                       Over 2,000 locations around the US. Platform visits average
                       15 min.
                     </p>
@@ -412,16 +417,16 @@ export default function AnimatedHomePage() {
         </section>
 
         {/* Comprehensive Features List */}
-        <section className="py-20 bg-white/80 backdrop-blur-sm">
+        <section className="py-12 sm:py-20 bg-white/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <div className="text-center mb-12 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
                 <span className="gradient-text">160+</span> governance processes
               </h2>
             </div>
 
             <div className="animate-fade-up">
-              <div className="text-sm leading-relaxed text-gray-600 space-y-2">
+              <div className="text-xs sm:text-sm leading-relaxed text-gray-600 space-y-2">
                 <p>
                   <span className="font-semibold text-orange-600">ALL-IN-ONE FOR EVERYONE.</span> Access to: <span className="font-semibold">BOARD</span> Meeting Management, Document Control, Resolution Tracking,
                   Voting Systems, <span className="font-semibold">COMPLIANCE</span> Audit Trails, Regulatory Reporting, Policy Management, Risk Assessment, <span className="font-semibold">SECURITY</span> Access Controls,
@@ -441,17 +446,17 @@ export default function AnimatedHomePage() {
         </section>
 
         {/* Testimonials with Animation */}
-        <section id="testimonials" className="py-20 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 backdrop-blur-sm">
+        <section id="testimonials" className="py-12 sm:py-20 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <div className="text-center mb-12 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
                 Join hundreds of thousands
                 <br />
                 <span className="gradient-text">taking charge of their governance</span>
               </h2>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {[
                 {
                   quote: "                  &quot;I am so impressed. I tested on a holiday Sunday and my period started/rescheduled and I got an answer within 5 minutes. Plus help scheduling. I&apos;m impressed with the lab info so far. I really love this more than I thought I would.&quot;",

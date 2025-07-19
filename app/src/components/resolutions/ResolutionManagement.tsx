@@ -453,56 +453,60 @@ export function ResolutionManagement({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header Actions */}
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-4">
-          <div className="flex-1 max-w-sm">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 flex-1">
+          <div className="flex-1 sm:max-w-sm">
             <Input
               placeholder="Search resolutions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
             />
           </div>
           
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              {resolutionStatuses.map(status => (
-                <SelectItem key={status.value} value={status.value}>
-                  {status.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex space-x-2 sm:space-x-4">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {resolutionStatuses.map(status => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {resolutionTypes.map(type => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {resolutionTypes.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         {userRole === 'admin' && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
-                Create Resolution
+                <span className="hidden sm:inline">Create Resolution</span>
+                <span className="sm:hidden">Create</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>Create New Resolution</DialogTitle>
                 <DialogDescription>
@@ -510,8 +514,12 @@ export function ResolutionManagement({
                 </DialogDescription>
               </DialogHeader>
               
-              <form action={handleAddResolution} className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                await handleAddResolution(formData);
+              }} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">Resolution Title *</Label>
                     <Input id="title" name="title" required />
@@ -555,7 +563,7 @@ export function ResolutionManagement({
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="category_id">Category</Label>
                     <Select name="category_id">
@@ -594,7 +602,7 @@ export function ResolutionManagement({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="minimum_quorum">Minimum Quorum (%)</Label>
                     <Input 
@@ -639,20 +647,148 @@ export function ResolutionManagement({
       {/* Resolutions Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Board Resolutions ({filteredResolutions.length})</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Board Resolutions ({filteredResolutions.length})</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Resolution</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Voting Progress</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+        <CardContent className="p-0 sm:p-6">
+          {/* Mobile Card View */}
+          <div className="block sm:hidden">
+            {filteredResolutions.map((resolution) => (
+              <div key={resolution.id} className="border-b border-gray-200 p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-sm">{resolution.title}</h3>
+                    <p className="text-xs text-muted-foreground">{resolution.resolution_number}</p>
+                    {resolution.description && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {resolution.description.substring(0, 80)}
+                        {resolution.description.length > 80 && '...'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="ml-2">
+                    {getStatusBadge(resolution.status || 'draft')}
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center text-xs">
+                  <Badge variant="outline" className="text-xs">
+                    {resolutionTypes.find(t => t.value === resolution.resolution_type)?.label}
+                  </Badge>
+                  {resolution.voting_deadline && (
+                    <span className="text-muted-foreground">
+                      Due: {format(new Date(resolution.voting_deadline), 'MMM d')}
+                    </span>
+                  )}
+                </div>
+
+                {(resolution.status === 'voting' || resolution.status === 'approved' || resolution.status === 'rejected') && (
+                  <div className="space-y-2">
+                    <Progress value={calculateVotingProgress(resolution)} className="w-full h-2" />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center">
+                        <ThumbsUp className="w-3 h-3 mr-1 text-green-600" />
+                        {resolution.votes_for || 0}
+                      </span>
+                      <span className="flex items-center">
+                        <ThumbsDown className="w-3 h-3 mr-1 text-red-600" />
+                        {resolution.votes_against || 0}
+                      </span>
+                      <span className="flex items-center">
+                        <Minus className="w-3 h-3 mr-1 text-gray-600" />
+                        {resolution.votes_abstain || 0}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center">
+                  <div className="flex space-x-2">
+                    {userRole === 'admin' && (
+                      <Select
+                        value={resolution.status || undefined}
+                        onValueChange={(value) => handleUpdateStatus(resolution.id, value)}
+                      >
+                        <SelectTrigger className="w-24 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {resolutionStatuses.map(status => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  
+                  <div className="flex space-x-1">
+                    {canVoteOnResolution(resolution) && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => openVoteDialog(resolution)}
+                        className="h-8 px-2 text-xs"
+                      >
+                        <Vote className="h-3 w-3 mr-1" />
+                        Vote
+                      </Button>
+                    )}
+                    
+                    {canEditResolution(resolution) && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => loadEditingResolution(resolution)}
+                          className="h-8 px-2"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 px-2">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Resolution</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete &quot;{resolution.title}&quot;? 
+                                This action cannot be undone and will remove all associated votes.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteResolution(resolution.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Resolution</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Voting Progress</TableHead>
+                  <TableHead>Deadline</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {filteredResolutions.map((resolution) => (
                 <TableRow key={resolution.id}>
@@ -815,7 +951,8 @@ export function ResolutionManagement({
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
