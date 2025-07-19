@@ -5,26 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ArrowRight, 
   CheckCircle, 
   FileText, 
-  Calendar, 
   Users, 
   Shield, 
-  Zap, 
-  Clock,
+  Zap,
   BarChart3,
-  Star,
-  Play,
-  Quote,
-  Award,
   TrendingUp,
-  Smartphone,
-  Lock,
-  Globe,
-  Building,
-  Target,
-  Briefcase
+  Building
 } from 'lucide-react';
 
 export default function AnimatedHomePage() {
