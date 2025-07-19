@@ -12,12 +12,7 @@ export default async function DocumentUploadPage() {
     redirect('/auth/login');
   }
 
-  // Get user profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  // User is authenticated, proceed with page
 
   // Get categories for document categorization using our service
     const { categories: categoriesService } = getDatabaseServices(supabase);

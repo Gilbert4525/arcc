@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,7 +44,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Mail, Phone, User, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, Phone, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -61,8 +60,6 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const supabase = createClient();
 
   const filteredUsers = users.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -102,8 +99,9 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
       setUsers([user, ...users]);
       setIsAddDialogOpen(false);
       toast.success('User created successfully');
-    } catch (error: any) {
-      toast.error(`Failed to create user: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create user';
+      toast.error(`Failed to create user: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -142,8 +140,9 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
       setIsEditDialogOpen(false);
       setEditingUser(null);
       toast.success('User updated successfully');
-    } catch (error: any) {
-      toast.error(`Failed to update user: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update user';
+      toast.error(`Failed to update user: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -167,8 +166,9 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
       ));
       
       toast.success(`User ${isActive ? 'activated' : 'deactivated'} successfully`);
-    } catch (error: any) {
-      toast.error(`Failed to update user status: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update user status';
+      toast.error(`Failed to update user status: ${errorMessage}`);
     }
   };
 
@@ -187,8 +187,9 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
 
       setUsers(users.filter(user => user.id !== userId));
       toast.success('User deleted successfully');
-    } catch (error: any) {
-      toast.error(`Failed to delete user: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete user';
+      toast.error(`Failed to delete user: ${errorMessage}`);
     }
   };
 

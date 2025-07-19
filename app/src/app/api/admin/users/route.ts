@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getDatabaseServices } from '@/lib/database';
 
 // GET /api/admin/users - Get all users (admin only)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

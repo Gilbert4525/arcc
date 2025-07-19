@@ -52,9 +52,7 @@ import {
   Edit, 
   Trash2, 
   Vote, 
-  Calendar, 
   Clock, 
-  Users, 
   CheckCircle,
   XCircle,
   Eye,
@@ -63,7 +61,6 @@ import {
   ThumbsDown,
   Minus,
   AlertTriangle,
-  BarChart3,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -184,7 +181,7 @@ export function ResolutionManagement({
       setResolutions([data, ...resolutions]);
       setIsAddDialogOpen(false);
       toast.success('Resolution created successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -241,7 +238,7 @@ export function ResolutionManagement({
       setIsEditDialogOpen(false);
       setEditingResolution(null);
       toast.success('Resolution updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -250,7 +247,11 @@ export function ResolutionManagement({
 
   const handleUpdateStatus = async (resolutionId: string, newStatus: string) => {
     try {
-      const updateData: any = { 
+      const updateData: {
+        status: string;
+        updated_by: string;
+        passed_at?: string;
+      } = { 
         status: newStatus,
         updated_by: userId 
       };
@@ -274,14 +275,14 @@ export function ResolutionManagement({
         resolution.id === resolutionId 
           ? { 
               ...resolution, 
-              status: newStatus as any,
+              status: newStatus as Resolution['status'],
               passed_at: newStatus === 'approved' ? new Date().toISOString() : resolution.passed_at
             } 
           : resolution
       ));
       
       toast.success('Resolution status updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };
@@ -327,7 +328,7 @@ export function ResolutionManagement({
       }
 
       // Update resolution vote counts
-      const updates: any = {};
+      const updates: Partial<Resolution> = {};
       if (vote === 'for') updates.votes_for = votingResolution.votes_for + 1;
       if (vote === 'against') updates.votes_against = votingResolution.votes_against + 1;
       if (vote === 'abstain') updates.votes_abstain = votingResolution.votes_abstain + 1;
@@ -371,7 +372,7 @@ export function ResolutionManagement({
       setIsVoteDialogOpen(false);
       setVotingResolution(null);
       toast.success('Vote recorded successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -399,7 +400,7 @@ export function ResolutionManagement({
 
       setResolutions(resolutions.filter(resolution => resolution.id !== resolutionId));
       toast.success('Resolution deleted successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };

@@ -123,7 +123,7 @@ export class ProfilesService {
   /**
    * Get user profile with stats
    */
-  async getProfileWithStats(userId: string): Promise<any | null> {
+  async getProfileWithStats(userId: string): Promise<Profile | null> {
     const { data: profile, error } = await this.supabase
       .from('profiles')
       .select('*')

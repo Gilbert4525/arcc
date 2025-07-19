@@ -46,14 +46,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  FileText, 
-  Calendar, 
+import {
+  Plus,
+  Edit,
+  Trash2,
+  FileText,
+  Calendar,
   Gavel,
-  Circle,
   Search,
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -74,7 +73,7 @@ const categoryTypes = [
 ];
 
 const predefinedColors = [
-  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', 
+  '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
   '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6B7280'
 ];
 
@@ -86,19 +85,19 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  
+
   const supabase = createClient();
 
   const filteredCategories = categories.filter(category => {
     const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         category.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      category.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'all' || category.type === typeFilter;
     return matchesSearch && matchesType;
   });
 
   const handleAddCategory = async (formData: FormData) => {
     setLoading(true);
-    
+
     try {
       const name = formData.get('name') as string;
       const description = formData.get('description') as string;
@@ -129,7 +128,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
       setCategories([data, ...categories]);
       setIsAddDialogOpen(false);
       toast.success('Category created successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -138,9 +137,9 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
 
   const handleEditCategory = async (formData: FormData) => {
     if (!editingCategory) return;
-    
+
     setLoading(true);
-    
+
     try {
       const name = formData.get('name') as string;
       const description = formData.get('description') as string;
@@ -171,7 +170,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
       setIsEditDialogOpen(false);
       setEditingCategory(null);
       toast.success('Category updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -190,12 +189,12 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
         return;
       }
 
-      setCategories(categories.map(category => 
+      setCategories(categories.map(category =>
         category.id === categoryId ? { ...category, is_active: isActive } : category
       ));
-      
+
       toast.success(`Category ${isActive ? 'activated' : 'deactivated'} successfully`);
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };
@@ -214,22 +213,19 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
 
       setCategories(categories.filter(category => category.id !== categoryId));
       toast.success('Category deleted successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    const typeConfig = categoryTypes.find(t => t.value === type);
-    return typeConfig?.icon || FileText;
-  };
+
 
   const getTypeBadge = (type: string) => {
     const typeConfig = categoryTypes.find(t => t.value === type);
     if (!typeConfig) return null;
 
     const Icon = typeConfig.icon;
-    
+
     return (
       <Badge variant="secondary" className={`text-${typeConfig.color}-700 bg-${typeConfig.color}-100`}>
         <Icon className="w-3 h-3 mr-1" />
@@ -257,7 +253,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
               className="pl-9"
             />
           </div>
-          
+
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Filter by type" />
@@ -272,7 +268,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
             </SelectContent>
           </Select>
         </div>
-        
+
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -287,14 +283,14 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                 Add a new category for organizing documents, meetings, or resolutions.
               </DialogDescription>
             </DialogHeader>
-            
+
             <form action={handleAddCategory} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Category Name *</Label>
                   <Input id="name" name="name" required />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="type">Type *</Label>
                   <Select name="type" required>
@@ -314,17 +310,17 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                   </Select>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  name="description" 
+                <Textarea
+                  id="description"
+                  name="description"
                   placeholder="Category description (optional)"
                   rows={3}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="color">Color</Label>
                 <div className="flex space-x-2">
@@ -345,7 +341,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                   ))}
                 </div>
               </div>
-              
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancel
@@ -364,7 +360,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
         {categoryTypes.map(type => {
           const typeCategories = categories.filter(cat => cat.type === type.value);
           const activeCategories = typeCategories.filter(cat => cat.is_active);
-          
+
           return (
             <Card key={type.value}>
               <CardContent className="p-6">
@@ -410,31 +406,29 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
             </TableHeader>
             <TableBody>
               {filteredCategories.map((category) => {
-                const TypeIcon = getTypeIcon(category.type);
-                
                 return (
                   <TableRow key={category.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <div
                           className="w-4 h-4 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: category.color }}
+                          style={{ backgroundColor: category.color || '#6B7280' }}
                         />
                         <div>
                           <div className="font-medium">{category.name}</div>
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       {getTypeBadge(category.type)}
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="max-w-xs">
                         {category.description ? (
                           <p className="text-sm text-muted-foreground">
-                            {category.description.length > 100 
+                            {category.description.length > 100
                               ? `${category.description.substring(0, 100)}...`
                               : category.description
                             }
@@ -444,11 +438,11 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                         )}
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Switch
-                          checked={category.is_active}
+                          checked={category.is_active ?? false}
                           onCheckedChange={(checked) => handleToggleActive(category.id, checked)}
                         />
                         <span className="text-sm">
@@ -464,16 +458,16 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                         </span>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="text-sm">
-                        <div>{format(new Date(category.created_at), 'MMM d, yyyy')}</div>
+                        <div>{category.created_at ? format(new Date(category.created_at), 'MMM d, yyyy') : 'Unknown date'}</div>
                         <div className="text-muted-foreground">
                           by {category.profiles?.full_name || category.profiles?.email || 'Unknown'}
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Button
@@ -483,7 +477,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        
+
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -494,7 +488,7 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Category</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{category.name}"? 
+                                Are you sure you want to delete &quot;{category.name}&quot;?
                                 This action cannot be undone. Items using this category will become uncategorized.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
@@ -529,19 +523,19 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                 Update category details and settings.
               </DialogDescription>
             </DialogHeader>
-            
+
             <form action={handleEditCategory} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit_name">Category Name *</Label>
-                  <Input 
-                    id="edit_name" 
-                    name="name" 
+                  <Input
+                    id="edit_name"
+                    name="name"
                     defaultValue={editingCategory.name}
-                    required 
+                    required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="edit_type">Type *</Label>
                   <Select name="type" defaultValue={editingCategory.type}>
@@ -561,17 +555,17 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                   </Select>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="edit_description">Description</Label>
-                <Textarea 
-                  id="edit_description" 
-                  name="description" 
+                <Textarea
+                  id="edit_description"
+                  name="description"
                   defaultValue={editingCategory.description || ''}
                   rows={3}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="edit_color">Color</Label>
                 <div className="flex space-x-2">
@@ -585,22 +579,21 @@ export function CategoryManagement({ initialCategories, userId }: CategoryManage
                         defaultChecked={color === editingCategory.color}
                       />
                       <div
-                        className={`w-8 h-8 rounded-full border-2 transition-colors ${
-                          color === editingCategory.color 
-                            ? 'border-gray-900' 
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
+                        className={`w-8 h-8 rounded-full border-2 transition-colors ${color === editingCategory.color
+                          ? 'border-gray-900'
+                          : 'border-gray-300 hover:border-gray-400'
+                          }`}
                         style={{ backgroundColor: color }}
                       />
                     </label>
                   ))}
                 </div>
               </div>
-              
+
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setIsEditDialogOpen(false);
                     setEditingCategory(null);

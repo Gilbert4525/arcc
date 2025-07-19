@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     let categories;
 
     if (type) {
-      categories = await CategoriesService.getCategoriesByType(type as any);
+      categories = await CategoriesService.getCategoriesByType(type);
     } else {
       categories = await CategoriesService.getCategories();
     }

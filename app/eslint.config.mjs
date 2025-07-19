@@ -12,14 +12,13 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: ["src/types/database.ts"],
     rules: {
       "prefer-const": "error",
       "no-var": "error",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "react/no-unescaped-entities": "warn",
-      "react-hooks/exhaustive-deps": "warn"
+      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-explicit-any": "error",
+      "react/no-unescaped-entities": "error",
+      "react-hooks/exhaustive-deps": "error"
     }
   }
 ];

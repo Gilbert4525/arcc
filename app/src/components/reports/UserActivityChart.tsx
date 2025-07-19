@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, UserCheck, UserX, Shield } from 'lucide-react';
+import { Users, UserCheck, Shield } from 'lucide-react';
 
 interface User {
   id: string;
@@ -21,7 +21,6 @@ interface UserActivityChartProps {
 export function UserActivityChart({ users }: UserActivityChartProps) {
   const totalUsers = users.length;
   const activeUsers = users.filter(u => u.is_active).length;
-  const inactiveUsers = totalUsers - activeUsers;
   const adminUsers = users.filter(u => u.role === 'admin').length;
   const boardMembers = users.filter(u => u.role === 'board_member').length;
   

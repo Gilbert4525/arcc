@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { createClient } from '@/lib/supabase/client';
+
 import { Database } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,11 +74,11 @@ const getFileIcon = (fileType: string) => {
   return FileText;
 };
 
-export function DocumentUpload({ categories, userId }: DocumentUploadProps) {
+export function DocumentUpload({ categories }: Omit<DocumentUploadProps, 'userId'>) {
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   
-  const supabase = createClient();
+
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map(file => ({
@@ -112,7 +112,7 @@ export function DocumentUpload({ categories, userId }: DocumentUploadProps) {
     },
   });
 
-  const updateFileField = (id: string, field: keyof UploadFile, value: any) => {
+  const updateFileField = <K extends keyof UploadFile>(id: string, field: K, value: UploadFile[K]) => {
     setUploadFiles(prev => prev.map(file => 
       file.id === id ? { ...file, [field]: value } : file
     ));
@@ -148,26 +148,22 @@ export function DocumentUpload({ categories, userId }: DocumentUploadProps) {
         throw new Error(errorData.error || 'Upload failed');
       }
 
-      const { document } = await response.json();
+      await response.json();
 
       updateFileField(uploadFile.id, 'status', 'success');
       updateFileField(uploadFile.id, 'progress', 100);
       
       toast.success(`${file.name} uploaded successfully`);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed';
       updateFileField(uploadFile.id, 'status', 'error');
-      updateFileField(uploadFile.id, 'errorMessage', error.message);
-      toast.error(`Failed to upload ${file.name}: ${error.message}`);
+      updateFileField(uploadFile.id, 'errorMessage', errorMessage);
+      toast.error(`Failed to upload ${file.name}: ${errorMessage}`);
     }
   };
 
-  const calculateFileChecksum = async (file: File): Promise<string> => {
-    const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
+
 
   const handleUploadAll = async () => {
     const pendingFiles = uploadFiles.filter(file => file.status === 'pending');

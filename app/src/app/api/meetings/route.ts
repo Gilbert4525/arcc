@@ -32,13 +32,31 @@ export async function GET(request: NextRequest) {
       const meetings = await meetingsService.getUpcomingMeetings(limit);
       result = { meetings, total: meetings.length, hasMore: false };
     } else if (status) {
-      const meetings = await meetingsService.getMeetingsByStatus(status as any);
+      const meetings = await meetingsService.getMeetingsByStatus(status);
       result = { meetings, total: meetings.length, hasMore: false };
     } else if (type) {
-      const meetings = await meetingsService.getMeetingsByType(type as any);
+      const meetings = await meetingsService.getMeetingsByType(type);
       result = { meetings, total: meetings.length, hasMore: false };
     } else {
-      result = await meetingsService.getMeetings(page, limit);
+      // Check if we want all meetings with details (for management interface)
+      const withDetails = searchParams.get('withDetails');
+      if (withDetails === 'true') {
+        try {
+          console.log('Attempting to get meetings with details...');
+          const meetings = await meetingsService.getAllMeetingsWithDetails();
+          console.log('Meetings retrieved:', meetings.length);
+          result = { meetings, total: meetings.length, hasMore: false };
+        } catch (error) {
+          console.error('Error getting meetings with details:', error);
+          // Fallback to basic meetings if detailed query fails
+          console.log('Falling back to basic meetings...');
+          const basicMeetings = await meetingsService.getMeetings(1, 100);
+          console.log('Basic meetings result:', basicMeetings);
+          result = basicMeetings;
+        }
+      } else {
+        result = await meetingsService.getMeetings(page, limit);
+      }
     }
 
     return NextResponse.json(result);

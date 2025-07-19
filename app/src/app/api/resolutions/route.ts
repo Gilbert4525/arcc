@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       const resolutions = await resolutionsService.getActiveVotingResolutions();
       result = { resolutions, total: resolutions.length, hasMore: false };
     } else if (status) {
-      const resolutions = await resolutionsService.getResolutionsByStatus(status as any);
+      const resolutions = await resolutionsService.getResolutionsByStatus(status);
       result = { resolutions, total: resolutions.length, hasMore: false };
     } else {
       result = await resolutionsService.getResolutions(page, limit);

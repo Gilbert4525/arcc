@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Calendar, Clock, MapPin, Users, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,26 +79,28 @@ export default function MeetingManagement() {
   const supabase = createClient();
   const { meetings: meetingsService, categories: categoriesService } = getDatabaseServices(supabase);
 
-  // Data fetching effects
-  useEffect(() => {
-    loadMeetings();
-    loadCategories();
-  }, []);
-
-  async function loadMeetings() {
+  const loadMeetings = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await meetingsService.getAllMeetingsWithDetails();
-      setMeetings(data as MeetingWithDetails[]);
+      
+      // Use API endpoint with withDetails=true to get all meetings with related data
+      const response = await fetch('/api/meetings?withDetails=true');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      const meetingsData = result.meetings || [];
+      setMeetings(meetingsData as MeetingWithDetails[]);
     } catch (error) {
       console.error('Error loading meetings:', error);
       toast.error('Failed to load meetings');
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     try {
       const data = await categoriesService.getCategories();
       setCategories(data);
@@ -106,7 +108,13 @@ export default function MeetingManagement() {
       console.error('Error loading categories:', error);
       toast.error('Failed to load categories');
     }
-  }
+  }, [categoriesService]);
+
+  // Data fetching effects - run only once on mount
+  useEffect(() => {
+    loadMeetings();
+    loadCategories();
+  }, []); // Empty dependency array to run only once
 
   // Computed values - must be before return statement
   const filteredMeetings = meetings.filter((meeting) => {

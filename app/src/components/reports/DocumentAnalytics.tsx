@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Eye, Download, Clock, CheckCircle } from 'lucide-react';
+import { FileText, Eye, Download, CheckCircle } from 'lucide-react';
 
 interface Document {
   id: string;

@@ -30,7 +30,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -49,7 +48,6 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   Search,
-  Filter,
   Download,
   Eye,
   Edit,
@@ -61,10 +59,7 @@ import {
   Archive,
   Upload,
   Calendar,
-  User,
-  Tag,
   CheckCircle,
-  XCircle,
   Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';

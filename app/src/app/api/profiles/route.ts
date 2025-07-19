@@ -3,7 +3,7 @@ import { ProfilesService } from '@/lib/database';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // GET /api/profiles - Get all profiles (admin only)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

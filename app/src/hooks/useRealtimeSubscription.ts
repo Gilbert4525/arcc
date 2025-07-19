@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 
@@ -26,7 +26,7 @@ export function useRealtimeSubscription<T extends TableName>({
 }: UseRealtimeSubscriptionOptions<T>) {
   const [isConnected, setIsConnected] = useState(false);
   const supabase = createClient();
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const callbacksRef = useRef({ onInsert, onUpdate, onDelete });
 
   // Update callbacks ref when they change
@@ -45,14 +45,18 @@ export function useRealtimeSubscription<T extends TableName>({
       const channel = supabase
         .channel(channelName)
         .on(
-          'postgres_changes' as any,
+          'postgres_changes',
           {
             event: event,
             schema: 'public',
             table: table,
             filter: filter,
           },
-          (payload: any) => {
+          (payload: {
+            eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+            new: RowData<T>;
+            old: RowData<T>;
+          }) => {
             // Use current callbacks from ref to avoid stale closures
             const { onInsert: currentOnInsert, onUpdate: currentOnUpdate, onDelete: currentOnDelete } = callbacksRef.current;
 
@@ -99,7 +103,7 @@ export function useRealtimeSubscription<T extends TableName>({
         setIsConnected(false);
       }
     };
-  }, [table, filter, event]); // Only re-subscribe on core parameter changes
+  }, [table, filter, event, supabase]); // Only re-subscribe on core parameter changes
 
   return { isConnected };
 }

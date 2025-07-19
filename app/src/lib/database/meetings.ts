@@ -157,23 +157,43 @@ export class MeetingsService {
 
   /**
    * Get all meetings with related details (creator, category)
+   * This method handles both admin and board member access
    */
   async getAllMeetingsWithDetails(): Promise<Meeting[]> {
-    const { data, error } = await this.supabase
-      .from('meetings')
-      .select(`
-        *,
-        profiles!meetings_created_by_fkey(full_name, email, avatar_url),
-        categories(name, color)
-      `)
-      .order('meeting_date', { ascending: false });
+    try {
+      // Use a simpler query that should work with RLS
+      const { data, error } = await this.supabase
+        .from('meetings')
+        .select(`
+          *,
+          profiles:created_by(full_name, email, avatar_url),
+          categories(name, color)
+        `)
+        .order('meeting_date', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching meetings with details:', error);
+      if (error) {
+        console.error('Error fetching meetings with details:', error);
+        console.error('Error details:', error);
+        
+        // If the detailed query fails, try a simpler one
+        const { data: simpleData, error: simpleError } = await this.supabase
+          .from('meetings')
+          .select('*')
+          .order('meeting_date', { ascending: false });
+
+        if (simpleError) {
+          console.error('Simple query also failed:', simpleError);
+          return [];
+        }
+
+        return simpleData || [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in getAllMeetingsWithDetails:', error);
       return [];
     }
-
-    return data || [];
   }
 
   /**
