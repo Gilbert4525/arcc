@@ -237,7 +237,7 @@ export function DocumentManagement({
       ));
 
       toast.success(`Document ${isPublished ? 'published' : 'unpublished'} successfully`);
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };
@@ -280,7 +280,7 @@ export function DocumentManagement({
       setIsEditDialogOpen(false);
       setEditingDocument(null);
       toast.success('Document updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -312,7 +312,7 @@ export function DocumentManagement({
 
       setDocuments(documents.filter(doc => doc.id !== documentId));
       toast.success('Document deleted successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };
@@ -556,7 +556,7 @@ export function DocumentManagement({
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Document</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Are you sure you want to delete "{document.title}"?
+                                      Are you sure you want to delete &quot;{document.title}&quot;?
                                       This action cannot be undone and will permanently delete the file.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>

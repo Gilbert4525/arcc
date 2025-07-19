@@ -29,7 +29,6 @@ export default async function DocumentUploadPage() {
       
       <DocumentUpload 
         categories={categories || []} 
-        userId={user.id}
       />
     </div>
   );

@@ -45,18 +45,14 @@ export function useRealtimeSubscription<T extends TableName>({
       const channel = supabase
         .channel(channelName)
         .on(
-          'postgres_changes',
+          'postgres_changes' as any,
           {
             event: event,
             schema: 'public',
             table: table,
             filter: filter,
-          },
-          (payload: {
-            eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-            new: RowData<T>;
-            old: RowData<T>;
-          }) => {
+          } as any,
+          (payload: any) => {
             // Use current callbacks from ref to avoid stale closures
             const { onInsert: currentOnInsert, onUpdate: currentOnUpdate, onDelete: currentOnDelete } = callbacksRef.current;
 

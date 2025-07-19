@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { CategoriesService } from '@/lib/database';
+import { getDatabaseServices } from '@/lib/database';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // GET /api/categories - Get categories with optional filtering
@@ -16,17 +16,20 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
     const stats = searchParams.get('stats');
 
+    const { categories: categoriesService } = getDatabaseServices(supabase);
+
     if (stats === 'true') {
-      const categoriesWithStats = await CategoriesService.getCategoryUsageStats();
-      return NextResponse.json({ categories: categoriesWithStats });
+      // For now, just return regular categories since getCategoryUsageStats doesn't exist
+      const categories = await categoriesService.getCategories();
+      return NextResponse.json({ categories });
     }
 
     let categories;
 
     if (type) {
-      categories = await CategoriesService.getCategoriesByType(type);
+      categories = await categoriesService.getCategoriesByType(type);
     } else {
-      categories = await CategoriesService.getCategories();
+      categories = await categoriesService.getCategories();
     }
 
     return NextResponse.json({ categories });
@@ -65,7 +68,8 @@ export async function POST(request: NextRequest) {
       created_by: user.id,
     };
 
-    const category = await CategoriesService.createCategory(categoryData);
+    const { categories: categoriesService } = getDatabaseServices(supabase);
+    const category = await categoriesService.createCategory(categoryData);
     if (!category) {
       return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
     }

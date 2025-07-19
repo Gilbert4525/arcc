@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProfilesService } from '@/lib/database';
+import { getDatabaseServices } from '@/lib/database';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // GET /api/profiles - Get all profiles (admin only)
@@ -12,13 +12,15 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { profiles: profilesService } = getDatabaseServices(supabase);
+
     // Get user profile to check role
-    const profile = await ProfilesService.getProfile(user.id);
+    const profile = await profilesService.getProfile(user.id);
     if (!profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const profiles = await ProfilesService.getAllProfiles();
+    const profiles = await profilesService.getAllProfiles();
     return NextResponse.json({ profiles });
   } catch (error) {
     console.error('Error in GET /api/profiles:', error);
@@ -39,8 +41,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { id, email, full_name, avatar_url, role, position, phone, bio } = body;
 
+    const { profiles: profilesService } = getDatabaseServices(supabase);
+
     // Users can only update their own profile, admins can update any profile
-    const currentProfile = await ProfilesService.getProfile(user.id);
+    const currentProfile = await profilesService.getProfile(user.id);
     if (!currentProfile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
@@ -60,7 +64,7 @@ export async function POST(request: NextRequest) {
       bio,
     };
 
-    const profile = await ProfilesService.upsertProfile(profileData);
+    const profile = await profilesService.upsertProfile(profileData);
     if (!profile) {
       return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
     }

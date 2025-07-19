@@ -66,7 +66,7 @@ import { format } from 'date-fns';
 
 type Resolution = Database['public']['Tables']['resolutions']['Row'] & {
   profiles?: { full_name: string | null; email: string } | null;
-  categories?: { name: string; color: string } | null;
+  categories?: { name: string; color: string | null } | null;
 };
 
 type Category = Database['public']['Tables']['categories']['Row'];
@@ -168,7 +168,7 @@ export function ResolutionManagement({
         })
         .select(`
           *,
-          profiles:created_by(full_name, email),
+          profiles!created_by(full_name, email),
           categories(name, color)
         `)
         .single();
@@ -224,7 +224,7 @@ export function ResolutionManagement({
         .eq('id', editingResolution.id)
         .select(`
           *,
-          profiles:created_by(full_name, email),
+          profiles!created_by(full_name, email),
           categories(name, color)
         `)
         .single();
@@ -329,18 +329,24 @@ export function ResolutionManagement({
 
       // Update resolution vote counts
       const updates: Partial<Resolution> = {};
-      if (vote === 'for') updates.votes_for = votingResolution.votes_for + 1;
-      if (vote === 'against') updates.votes_against = votingResolution.votes_against + 1;
-      if (vote === 'abstain') updates.votes_abstain = votingResolution.votes_abstain + 1;
+      const currentVotesFor = votingResolution.votes_for || 0;
+      const currentVotesAgainst = votingResolution.votes_against || 0;
+      const currentVotesAbstain = votingResolution.votes_abstain || 0;
+      
+      if (vote === 'for') updates.votes_for = currentVotesFor + 1;
+      if (vote === 'against') updates.votes_against = currentVotesAgainst + 1;
+      if (vote === 'abstain') updates.votes_abstain = currentVotesAbstain + 1;
 
       // Check if voting is complete
-      const totalVotes = votingResolution.votes_for + votingResolution.votes_against + votingResolution.votes_abstain + 1;
-      const newVotesFor = vote === 'for' ? votingResolution.votes_for + 1 : votingResolution.votes_for;
+      const totalVotes = currentVotesFor + currentVotesAgainst + currentVotesAbstain + 1;
+      const newVotesFor = vote === 'for' ? currentVotesFor + 1 : currentVotesFor;
+      const totalEligibleVoters = votingResolution.total_eligible_voters || 1;
+      const minimumQuorum = votingResolution.minimum_quorum || 50;
       
-      if (totalVotes >= votingResolution.total_eligible_voters) {
+      if (totalVotes >= totalEligibleVoters) {
         // Determine if resolution passes
         const majorityRequired = votingResolution.requires_majority;
-        const quorumMet = (totalVotes / votingResolution.total_eligible_voters) * 100 >= votingResolution.minimum_quorum;
+        const quorumMet = (totalVotes / totalEligibleVoters) * 100 >= minimumQuorum;
         const majorityVotes = majorityRequired ? newVotesFor > (totalVotes / 2) : newVotesFor > 0;
         
         if (quorumMet && majorityVotes) {
@@ -428,8 +434,12 @@ export function ResolutionManagement({
   };
 
   const calculateVotingProgress = (resolution: Resolution) => {
-    const totalVotes = resolution.votes_for + resolution.votes_against + resolution.votes_abstain;
-    return (totalVotes / resolution.total_eligible_voters) * 100;
+    const votesFor = resolution.votes_for || 0;
+    const votesAgainst = resolution.votes_against || 0;
+    const votesAbstain = resolution.votes_abstain || 0;
+    const totalVotes = votesFor + votesAgainst + votesAbstain;
+    const totalEligible = resolution.total_eligible_voters || 1;
+    return (totalVotes / totalEligible) * 100;
   };
 
   const loadEditingResolution = (resolution: Resolution) => {
@@ -682,7 +692,7 @@ export function ResolutionManagement({
                   </TableCell>
                   
                   <TableCell>
-                    {getStatusBadge(resolution.status)}
+                    {getStatusBadge(resolution.status || 'draft')}
                   </TableCell>
                   
                   <TableCell>
@@ -692,19 +702,19 @@ export function ResolutionManagement({
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span className="flex items-center">
                             <ThumbsUp className="w-3 h-3 mr-1 text-green-600" />
-                            {resolution.votes_for}
+                            {resolution.votes_for || 0}
                           </span>
                           <span className="flex items-center">
                             <ThumbsDown className="w-3 h-3 mr-1 text-red-600" />
-                            {resolution.votes_against}
+                            {resolution.votes_against || 0}
                           </span>
                           <span className="flex items-center">
                             <Minus className="w-3 h-3 mr-1 text-gray-600" />
-                            {resolution.votes_abstain}
+                            {resolution.votes_abstain || 0}
                           </span>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {resolution.votes_for + resolution.votes_against + resolution.votes_abstain} / {resolution.total_eligible_voters} votes
+                          {(resolution.votes_for || 0) + (resolution.votes_against || 0) + (resolution.votes_abstain || 0)} / {resolution.total_eligible_voters || 0} votes
                         </div>
                       </div>
                     ) : (
@@ -735,7 +745,7 @@ export function ResolutionManagement({
                       {/* Status Update Dropdown for Admin */}
                       {userRole === 'admin' && (
                         <Select
-                          value={resolution.status}
+                          value={resolution.status || undefined}
                           onValueChange={(value) => handleUpdateStatus(resolution.id, value)}
                         >
                           <SelectTrigger className="w-32">
@@ -783,7 +793,7 @@ export function ResolutionManagement({
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete Resolution</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete "{resolution.title}"? 
+                                  Are you sure you want to delete &quot;{resolution.title}&quot;? 
                                   This action cannot be undone and will remove all associated votes.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
@@ -816,7 +826,7 @@ export function ResolutionManagement({
             <DialogHeader>
               <DialogTitle>Cast Your Vote</DialogTitle>
               <DialogDescription>
-                Vote on "{votingResolution.title}" - {votingResolution.resolution_number}
+                Vote on &quot;{votingResolution.title}&quot; - {votingResolution.resolution_number}
               </DialogDescription>
             </DialogHeader>
             
@@ -907,7 +917,7 @@ export function ResolutionManagement({
                 
                 <div className="space-y-2">
                   <Label htmlFor="edit_resolution_type">Resolution Type *</Label>
-                  <Select name="resolution_type" defaultValue={editingResolution.resolution_type}>
+                  <Select name="resolution_type" defaultValue={editingResolution.resolution_type || undefined}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -946,7 +956,7 @@ export function ResolutionManagement({
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit_category_id">Category</Label>
-                  <Select name="category_id" defaultValue={editingResolution.category_id || ''}>
+                  <Select name="category_id" defaultValue={editingResolution.category_id || undefined}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -976,7 +986,7 @@ export function ResolutionManagement({
                     id="edit_total_eligible_voters" 
                     name="total_eligible_voters" 
                     type="number" 
-                    defaultValue={editingResolution.total_eligible_voters}
+                    defaultValue={editingResolution.total_eligible_voters || undefined}
                     min="1"
                     required 
                   />
@@ -990,7 +1000,7 @@ export function ResolutionManagement({
                     id="edit_minimum_quorum" 
                     name="minimum_quorum" 
                     type="number" 
-                    defaultValue={editingResolution.minimum_quorum}
+                    defaultValue={editingResolution.minimum_quorum || undefined}
                     min="1"
                     max="100"
                   />
@@ -1000,7 +1010,7 @@ export function ResolutionManagement({
                   <Switch 
                     id="edit_requires_majority" 
                     name="requires_majority" 
-                    defaultChecked={editingResolution.requires_majority}
+                    defaultChecked={editingResolution.requires_majority || false}
                   />
                   <Label htmlFor="edit_requires_majority">Requires Majority Vote</Label>
                 </div>

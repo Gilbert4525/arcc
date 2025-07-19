@@ -114,7 +114,7 @@ export default function MeetingManagement() {
   useEffect(() => {
     loadMeetings();
     loadCategories();
-  }, []); // Empty dependency array to run only once
+  }, [loadMeetings, loadCategories]); // Include dependencies
 
   // Computed values - must be before return statement
   const filteredMeetings = meetings.filter((meeting) => {

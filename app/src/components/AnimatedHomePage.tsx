@@ -375,7 +375,7 @@ export default function AnimatedHomePage() {
                 <div className="flex items-start space-x-4">
                   <CheckCircle className="w-6 h-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Expert Insights / Secretary's Summary</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">Expert Insights / Secretary&apos;s Summary</h4>
                     <p className="text-gray-600 text-sm">
                       Get insights from top secretaries and 1000s of hours of
                       research based on your results. Read your Secretary&apos;s
@@ -477,7 +477,7 @@ export default function AnimatedHomePage() {
                 >
                   <CardContent className="p-0">
                     <p className="text-sm text-gray-700 italic leading-relaxed">
-                      "{testimonial.quote}"
+                      {testimonial.quote}
                     </p>
                   </CardContent>
                 </Card>
@@ -543,7 +543,7 @@ export default function AnimatedHomePage() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold mb-4">What's included</h4>
+                <h4 className="font-semibold mb-4">What&apos;s included</h4>
                 <ul className="space-y-2 text-gray-400">
                   <li><a href="#" className="hover:text-white transition-colors">Governance</a></li>
                   <li><a href="#" className="hover:text-white transition-colors">Compliance</a></li>
