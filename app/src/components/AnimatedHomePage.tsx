@@ -204,8 +204,7 @@ export default function AnimatedHomePage() {
 
               <div className="animate-slide-right">
                 <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
-                  Every year. Starting with 160+ board processes and insights from
-                  top governance professionals. All for just $499.
+                  Over 160 Proven Board Processes, Ready to Use — Built in collaboration with board leaders across sectors. Streamline governance, compliance, and strategic decision-making from day one.
                 </p>
               </div>
 
@@ -353,9 +352,9 @@ export default function AnimatedHomePage() {
                   </div>
 
                   <div className="mb-6 sm:mb-8">
-                    <div className="text-3xl sm:text-5xl font-bold text-gray-900 mb-2">$42</div>
-                    <div className="text-gray-600">/month</div>
-                    <div className="text-sm text-gray-500">Charged annually at $499</div>
+                    <div className="text-3xl sm:text-5xl font-bold text-gray-900 mb-2">All-in Access</div>
+                    <div className="text-gray-600">Tools</div>
+                    <div className="text-sm text-gray-500">insights, and features built for leaders.</div>
                   </div>
 
                   <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 sm:py-4 text-base sm:text-lg font-semibold transition-all duration-300 hover:scale-105">
@@ -421,8 +420,11 @@ export default function AnimatedHomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12 sm:mb-16">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-                <span className="gradient-text">160+</span> governance processes
+                <span className="gradient-text">160+</span> Proven Board Processes
               </h2>
+              <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
+                Built in collaboration with board leaders across sectors — everything you need for effective governance.
+              </p>
             </div>
 
             <div className="animate-fade-up">
@@ -515,8 +517,7 @@ export default function AnimatedHomePage() {
                 <span className="gradient-text">your governance</span>
               </h2>
               <p className="text-xl text-gray-600 mb-12">
-                Every year. Starting with 160+ governance processes and insights from
-                top professionals. All for just $499.
+                Gain uninterrupted access to a purpose-built platform designed for high-functioning boards.
               </p>
               <Link href="/auth/login">
                 <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-12 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl">
