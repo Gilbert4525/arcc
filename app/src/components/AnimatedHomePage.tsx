@@ -95,9 +95,16 @@ export default function AnimatedHomePage() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <h1 className="text-xl sm:text-2xl font-bold gradient-text">
-                    BoardMix
-                  </h1>
+                  <Link href="/" className="flex items-center space-x-2">
+                    <img 
+                      src="/boardmix-logo.png" 
+                      alt="BoardMix LLC" 
+                      className="h-8 w-8 sm:h-10 sm:w-10"
+                    />
+                    <h1 className="text-xl sm:text-2xl font-bold gradient-text">
+                      BoardMix
+                    </h1>
+                  </Link>
                 </div>
               </div>
               <div className="hidden md:block">
@@ -533,9 +540,16 @@ export default function AnimatedHomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-4 gap-8">
               <div>
-                <h3 className="text-2xl font-bold mb-4 gradient-text">
-                  BoardMix
-                </h3>
+                <div className="flex items-center space-x-2 mb-4">
+                  <img 
+                    src="/boardmix-logo.png" 
+                    alt="BoardMix LLC" 
+                    className="h-8 w-8"
+                  />
+                  <h3 className="text-2xl font-bold gradient-text">
+                    BoardMix
+                  </h3>
+                </div>
                 <p className="text-gray-400 mb-4">
                   It&apos;s time you own your governance.
                 </p>

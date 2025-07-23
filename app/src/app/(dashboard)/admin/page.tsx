@@ -55,7 +55,7 @@ export default async function AdminPage() {
               Admin Dashboard
             </h1>
             <p className="text-gray-600 mt-2">
-              Manage the Arc Board Management System
+              Manage the BoardMix System
             </p>
           </div>
           <div className="flex space-x-2">
@@ -326,6 +326,6 @@ export default async function AdminPage() {
 }
 
 export const metadata = {
-  title: 'Admin Dashboard - Arc Board Management',
-  description: 'Administrative dashboard for Arc Board Management System',
+  title: 'Admin Dashboard - BoardMix',
+  description: 'Administrative dashboard for BoardMix System',
 };

@@ -46,6 +46,6 @@ export default async function DocumentsPage() {
 }
 
 export const metadata = {
-  title: 'Documents - Arc Board Management',
+  title: 'Documents - BoardMix',
   description: 'Browse and manage board documents',
 };

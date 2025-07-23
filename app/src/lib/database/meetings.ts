@@ -174,7 +174,7 @@ export class MeetingsService {
       if (error) {
         console.error('Error fetching meetings with details:', error);
         console.error('Error details:', error);
-        
+
         // If the detailed query fails, try a simpler one
         const { data: simpleData, error: simpleError } = await this.supabase
           .from('meetings')
@@ -330,7 +330,7 @@ export class MeetingsService {
    */
   async getUpcomingMeetingsForUser(userId: string, limit = 3): Promise<Meeting[]> {
     const now = new Date().toISOString();
-    
+
     // First get meeting IDs for this user
     const { data: participantData, error: participantError } = await this.supabase
       .from('meeting_participants')
@@ -399,9 +399,13 @@ export class MeetingsService {
         attendance_status: 'pending' as const
       }));
 
+      // Use upsert to handle duplicate key constraint
       const { error: insertError } = await this.supabase
         .from('meeting_participants')
-        .insert(participants);
+        .upsert(participants, {
+          onConflict: 'meeting_id,user_id',
+          ignoreDuplicates: false
+        });
 
       if (insertError) {
         console.error('Error adding meeting participants:', insertError);

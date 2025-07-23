@@ -392,6 +392,6 @@ export default async function ReportsPage() {
 }
 
 export const metadata = {
-  title: 'Reports - Arc Board Management',
+  title: 'Reports - BoardMix',
   description: 'System reports and analytics dashboard',
 };

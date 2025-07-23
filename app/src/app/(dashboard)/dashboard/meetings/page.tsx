@@ -28,6 +28,6 @@ export default async function MeetingsPage() {
 }
 
 export const metadata = {
-  title: 'Meetings - Arc Board Management',
+  title: 'Meetings - BoardMix',
   description: 'Manage board meetings and schedules',
 };

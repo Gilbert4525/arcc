@@ -84,8 +84,20 @@ export default function MeetingManagement() {
       setLoading(true);
       
       // Use API endpoint with withDetails=true to get all meetings with related data
-      const response = await fetch('/api/meetings?withDetails=true');
+      // The fetch will automatically include cookies for authentication
+      const response = await fetch('/api/meetings?withDetails=true', {
+        method: 'GET',
+        credentials: 'include', // This ensures cookies are included
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Please log in to view meetings');
+          return;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -102,19 +114,21 @@ export default function MeetingManagement() {
 
   const loadCategories = useCallback(async () => {
     try {
-      const data = await categoriesService.getCategories();
+      // Create a fresh service instance to avoid dependency issues
+      const { categories: freshCategoriesService } = getDatabaseServices(supabase);
+      const data = await freshCategoriesService.getCategories();
       setCategories(data);
     } catch (error) {
       console.error('Error loading categories:', error);
       toast.error('Failed to load categories');
     }
-  }, [categoriesService]);
+  }, [supabase]); // Only depend on supabase which is stable
 
   // Data fetching effects - run only once on mount
   useEffect(() => {
     loadMeetings();
     loadCategories();
-  }, [loadMeetings, loadCategories]); // Include dependencies
+  }, []); // Empty dependency array to run only once on mount
 
   // Computed values - must be before return statement
   const filteredMeetings = meetings.filter((meeting) => {
@@ -250,6 +264,8 @@ export default function MeetingManagement() {
   }
 
   async function handleSubmitMeeting(data: MeetingFormData) {
+    console.log('handleSubmitMeeting called with data:', data);
+    
     try {
       // Get the current user ID
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -283,13 +299,25 @@ export default function MeetingManagement() {
           return;
         }
       } else {
-        result = await meetingsService.createMeeting(meetingData as MeetingInsert);
-        if (result) {
-          toast.success('Meeting created successfully');
-        } else {
-          toast.error('Failed to create meeting');
+        // Use API endpoint to create meeting (this will automatically add participants)
+        const response = await fetch('/api/meetings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(meetingData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast.error(errorData.error || 'Failed to create meeting');
           return;
         }
+
+        const responseData = await response.json();
+        result = responseData.meeting;
+        toast.success('Meeting created successfully');
       }
 
       setIsDialogOpen(false);

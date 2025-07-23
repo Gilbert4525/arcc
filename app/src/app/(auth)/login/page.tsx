@@ -9,6 +9,6 @@ export default function LoginPage() {
 }
 
 export const metadata = {
-  title: 'Login - Arc Board Management',
-  description: 'Sign in to Arc Board Management System',
+  title: 'Login - BoardMix',
+  description: 'Sign in to BoardMix System',
 };

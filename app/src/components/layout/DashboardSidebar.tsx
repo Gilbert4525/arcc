@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +19,7 @@ import {
   FolderOpen,
   ChevronLeft,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 
 const navigationItems = [
@@ -80,7 +82,18 @@ const navigationItems = [
 export function DashboardSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push('/'); // Redirect to homepage
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   const filteredItems = navigationItems.filter(item =>
     item.roles.includes(user?.role || 'board_member')
@@ -96,9 +109,25 @@ export function DashboardSidebar() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
-              <h2 className="text-lg font-semibold text-gray-900">
-                Board Management
-              </h2>
+              <Link href="/" className="flex items-center space-x-2">
+                <img 
+                  src="/boardmix-logo.png" 
+                  alt="BoardMix LLC" 
+                  className="h-8 w-8"
+                />
+                <h2 className="text-lg font-semibold text-gray-900">
+                  BoardMix
+                </h2>
+              </Link>
+            )}
+            {isCollapsed && (
+              <Link href="/" className="flex items-center justify-center">
+                <img 
+                  src="/boardmix-logo.png" 
+                  alt="BoardMix LLC" 
+                  className="h-8 w-8"
+                />
+              </Link>
             )}
             <Button
               variant="ghost"
@@ -145,7 +174,7 @@ export function DashboardSidebar() {
 
         {/* User Info */}
         {!isCollapsed && user && (
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 space-y-3">
             <div className="flex items-center">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
@@ -156,6 +185,30 @@ export function DashboardSidebar() {
                 </p>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        )}
+
+        {/* Collapsed User Info with Logout */}
+        {isCollapsed && user && (
+          <div className="p-2 border-t border-gray-200">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="w-full justify-center text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>

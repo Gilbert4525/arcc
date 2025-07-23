@@ -8,8 +8,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Arc Board Management",
-  description: "Board management system for Arc Company",
+  title: "BoardMix",
+  description: "Board management system for high-functioning boards",
 };
 
 export default function RootLayout({

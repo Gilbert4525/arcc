@@ -951,7 +951,7 @@ export function ResolutionManagement({
                 </TableRow>
               ))}
             </TableBody>
-            </Table>
+          </Table>
           </div>
         </CardContent>
       </Card>

@@ -35,6 +35,6 @@ export default async function DocumentUploadPage() {
 }
 
 export const metadata = {
-  title: 'Upload Documents - Arc Board Management',
+  title: 'Upload Documents - BoardMix',
   description: 'Upload board documents and materials',
 };

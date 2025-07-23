@@ -49,6 +49,6 @@ export default async function ResolutionsPage() {
 }
 
 export const metadata = {
-  title: 'Resolutions - Arc Board Management',
+  title: 'Resolutions - BoardMix',
   description: 'Manage board resolutions and voting',
 };

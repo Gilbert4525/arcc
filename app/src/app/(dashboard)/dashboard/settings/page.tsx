@@ -244,6 +244,6 @@ export default async function SettingsPage() {
 }
 
 export const metadata = {
-  title: 'Settings - Arc Board Management',
+  title: 'Settings - BoardMix',
   description: 'Manage your account settings and preferences',
 };

@@ -50,6 +50,6 @@ export default async function CategoriesPage() {
 }
 
 export const metadata = {
-  title: 'Category Management - Arc Board Management',
+  title: 'Category Management - BoardMix',
   description: 'Manage system categories',
 };

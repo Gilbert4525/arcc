@@ -42,6 +42,6 @@ export default async function UsersPage() {
 }
 
 export const metadata = {
-  title: 'User Management - Arc Board Management',
+  title: 'User Management - BoardMix',
   description: 'Manage board members and administrators',
 };

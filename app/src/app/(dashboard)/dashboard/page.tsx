@@ -182,6 +182,6 @@ export default async function DashboardPage() {
 }
 
 export const metadata = {
-  title: 'Dashboard - Arc Board Management',
+  title: 'Dashboard - BoardMix',
   description: 'Board member dashboard',
 };
