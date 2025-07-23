@@ -97,8 +97,8 @@ export default function AnimatedHomePage() {
                 <div className="flex-shrink-0">
                   <Link href="/" className="flex items-center space-x-2">
                     <img 
-                      src="/boardmix-logo.png" 
-                      alt="BoardMix LLC" 
+                      src="/boardmix-logo.svg" 
+                      alt="Arc Board Management" 
                       className="h-8 w-8 sm:h-10 sm:w-10"
                     />
                     <h1 className="text-xl sm:text-2xl font-bold gradient-text">
@@ -542,8 +542,8 @@ export default function AnimatedHomePage() {
               <div>
                 <div className="flex items-center space-x-2 mb-4">
                   <img 
-                    src="/boardmix-logo.png" 
-                    alt="BoardMix LLC" 
+                    src="/boardmix-logo.svg" 
+                    alt="Arc Board Management" 
                     className="h-8 w-8"
                   />
                   <h3 className="text-2xl font-bold gradient-text">

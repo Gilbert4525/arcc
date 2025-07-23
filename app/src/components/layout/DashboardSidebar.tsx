@@ -111,20 +111,20 @@ export function DashboardSidebar() {
             {!isCollapsed && (
               <Link href="/" className="flex items-center space-x-2">
                 <img 
-                  src="/boardmix-logo.png" 
-                  alt="BoardMix LLC" 
+                  src="/boardmix-logo.svg" 
+                  alt="Arc Board Management" 
                   className="h-8 w-8"
                 />
                 <h2 className="text-lg font-semibold text-gray-900">
-                  BoardMix
+                  Arc Board Management
                 </h2>
               </Link>
             )}
             {isCollapsed && (
               <Link href="/" className="flex items-center justify-center">
                 <img 
-                  src="/boardmix-logo.png" 
-                  alt="BoardMix LLC" 
+                  src="/boardmix-logo.svg" 
+                  alt="Arc Board Management" 
                   className="h-8 w-8"
                 />
               </Link>
