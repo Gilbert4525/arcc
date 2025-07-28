@@ -1,146 +1,116 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Database } from '@/types/database';
+import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-type TableName = keyof Database['public']['Tables'];
-type RowData<T extends TableName> = Database['public']['Tables'][T]['Row'];
-
-interface UseRealtimeSubscriptionOptions<T extends TableName> {
-  table: T;
+interface UseRealtimeSubscriptionOptions {
+  table: string;
   filter?: string;
   event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-  onInsert?: (payload: RowData<T>) => void;
-  onUpdate?: (payload: RowData<T>) => void;
-  onDelete?: (payload: { old_record: RowData<T> }) => void;
+  onInsert?: (payload: RealtimePostgresChangesPayload<Record<string, any>>) => void;
+  onUpdate?: (payload: RealtimePostgresChangesPayload<Record<string, any>>) => void;
+  onDelete?: (payload: RealtimePostgresChangesPayload<Record<string, any>>) => void;
+  onChange?: (payload: RealtimePostgresChangesPayload<Record<string, any>>) => void;
 }
 
-export function useRealtimeSubscription<T extends TableName>({
+export function useRealtimeSubscription({
   table,
   filter,
   event = '*',
   onInsert,
   onUpdate,
   onDelete,
-}: UseRealtimeSubscriptionOptions<T>) {
-  const [isConnected, setIsConnected] = useState(false);
+  onChange,
+}: UseRealtimeSubscriptionOptions) {
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const supabase = createClient();
-  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const callbacksRef = useRef({ onInsert, onUpdate, onDelete });
 
-  // Update callbacks ref when they change
+  // Use refs to store the latest callback functions
+  const onInsertRef = useRef(onInsert);
+  const onUpdateRef = useRef(onUpdate);
+  const onDeleteRef = useRef(onDelete);
+  const onChangeRef = useRef(onChange);
+
+  // Update refs when callbacks change
   useEffect(() => {
-    callbacksRef.current = { onInsert, onUpdate, onDelete };
-  }, [onInsert, onUpdate, onDelete]);
+    onInsertRef.current = onInsert;
+    onUpdateRef.current = onUpdate;
+    onDeleteRef.current = onDelete;
+    onChangeRef.current = onChange;
+  }, [onInsert, onUpdate, onDelete, onChange]);
 
   useEffect(() => {
-    // Only create subscription if we don't have one or if core params changed
-    if (subscriptionRef.current) {
-      return;
-    }
-
-    const setupSubscription = () => {
-      const channelName = `realtime-${table}-${Date.now()}`;
-      const channel = supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes' as any,
-          {
-            event: event,
-            schema: 'public',
-            table: table,
-            filter: filter,
-          } as any,
-          (payload: any) => {
-            // Use current callbacks from ref to avoid stale closures
-            const { onInsert: currentOnInsert, onUpdate: currentOnUpdate, onDelete: currentOnDelete } = callbacksRef.current;
-
-            switch (payload.eventType) {
-              case 'INSERT':
-                if (currentOnInsert) {
-                  currentOnInsert(payload.new as RowData<T>);
-                }
-                break;
-              case 'UPDATE':
-                if (currentOnUpdate) {
-                  currentOnUpdate(payload.new as RowData<T>);
-                }
-                break;
-              case 'DELETE':
-                if (currentOnDelete) {
-                  currentOnDelete({ old_record: payload.old as RowData<T> });
-                }
-                break;
-            }
+    // Only run on client side to avoid hydration issues
+    if (typeof window === 'undefined') return;
+    
+    const channelName = `realtime:${table}${filter ? `:${filter}` : ''}`;
+    
+    const realtimeChannel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes' as any,
+        {
+          event: event as any,
+          schema: 'public',
+          table,
+          filter,
+        } as any,
+        (payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
+          console.log('Realtime payload:', payload);
+          
+          // Call the appropriate handler based on event type using refs
+          switch (payload.eventType) {
+            case 'INSERT':
+              onInsertRef.current?.(payload);
+              break;
+            case 'UPDATE':
+              onUpdateRef.current?.(payload);
+              break;
+            case 'DELETE':
+              onDeleteRef.current?.(payload);
+              break;
           }
-        )
-        .subscribe((status) => {
-          setIsConnected(status === 'SUBSCRIBED');
-          if (status === 'CLOSED' && subscriptionRef.current) {
-            // Auto-reconnect on connection loss
-            setTimeout(() => {
-              if (subscriptionRef.current) {
-                setupSubscription();
-              }
-            }, 1000);
-          }
-        });
+          
+          // Always call the general onChange handler using ref
+          onChangeRef.current?.(payload);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
-      subscriptionRef.current = channel;
-    };
-
-    setupSubscription();
+    setChannel(realtimeChannel);
 
     return () => {
-      if (subscriptionRef.current) {
-        supabase.removeChannel(subscriptionRef.current);
-        subscriptionRef.current = null;
-        setIsConnected(false);
-      }
+      console.log('Unsubscribing from realtime channel:', channelName);
+      realtimeChannel.unsubscribe();
     };
-  }, [table, filter, event, supabase]); // Only re-subscribe on core parameter changes
+  }, [table, filter, event, supabase]); // Only stable dependencies
 
-  return { isConnected };
+  return channel;
 }
 
-// Specialized hooks for common use cases
+// Specific hook for documents realtime updates
+export function useDocumentsRealtime(onDocumentChange: (document: any) => void) {
+  const onDocumentChangeRef = useRef(onDocumentChange);
+  
+  // Update ref when callback changes
+  useEffect(() => {
+    onDocumentChangeRef.current = onDocumentChange;
+  }, [onDocumentChange]);
 
-export function useDocumentsRealtime(onUpdate?: (documents: RowData<'documents'>) => void) {
+  const stableOnChange = useCallback((payload: RealtimePostgresChangesPayload<Record<string, any>>) => {
+    // Handle all document changes (INSERT, UPDATE, DELETE)
+    if (payload.new) {
+      onDocumentChangeRef.current(payload.new);
+    } else if (payload.old && payload.eventType === 'DELETE') {
+      onDocumentChangeRef.current({ ...payload.old, _deleted: true });
+    }
+  }, []);
+
   return useRealtimeSubscription({
     table: 'documents',
-    onInsert: onUpdate,
-    onUpdate: onUpdate,
-    onDelete: onUpdate ? () => onUpdate({} as RowData<'documents'>) : undefined,
-  });
-}
-
-export function useMeetingsRealtime(onUpdate?: (meeting: RowData<'meetings'>) => void) {
-  return useRealtimeSubscription({
-    table: 'meetings',
-    onInsert: onUpdate,
-    onUpdate: onUpdate,
-    onDelete: onUpdate ? () => onUpdate({} as RowData<'meetings'>) : undefined,
-  });
-}
-
-export function useResolutionsRealtime(onUpdate?: (resolution: RowData<'resolutions'>) => void) {
-  return useRealtimeSubscription({
-    table: 'resolutions',
-    onInsert: onUpdate,
-    onUpdate: onUpdate,
-    onDelete: onUpdate ? () => onUpdate({} as RowData<'resolutions'>) : undefined,
-  });
-}
-
-export function useResolutionVotesRealtime(
-  resolutionId?: string,
-  onVote?: (vote: RowData<'resolution_votes'>) => void
-) {
-  return useRealtimeSubscription({
-    table: 'resolution_votes',
-    filter: resolutionId ? `resolution_id=eq.${resolutionId}` : undefined,
-    onInsert: onVote,
-    onUpdate: onVote,
+    onChange: stableOnChange
   });
 }

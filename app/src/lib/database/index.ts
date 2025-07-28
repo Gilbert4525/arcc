@@ -5,8 +5,10 @@ import { DocumentsService } from './documents';
 import { MeetingsService } from './meetings';
 import { ResolutionsService } from './resolutions';
 import { CategoriesService } from './categories';
+import { NotificationsService } from './notifications';
+import { MinutesService } from './minutes';
 
-export { ProfilesService, DocumentsService, MeetingsService, ResolutionsService, CategoriesService };
+export { ProfilesService, DocumentsService, MeetingsService, ResolutionsService, CategoriesService, NotificationsService, MinutesService };
 
 // Re-export database types for convenience
 export type { Database } from '@/types/database';
@@ -23,5 +25,7 @@ export function getDatabaseServices(supabase: SupabaseClient<Database>) {
     meetings: new MeetingsService(supabase),
     resolutions: new ResolutionsService(supabase),
     categories: new CategoriesService(supabase),
+    notifications: new NotificationsService(supabase),
+    minutes: new MinutesService(supabase),
   } as const;
 }

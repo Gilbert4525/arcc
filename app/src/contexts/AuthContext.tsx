@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { AuthState, User } from '@/types/auth';
 
-const AuthContext = createContext<AuthState>({ user: null, loading: true });
+const AuthContext = createContext<AuthState>({ user: null, profile: null, loading: true });
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -16,6 +16,7 @@ export const useAuth = () => {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.error('RLS policy violation - user may not be properly authenticated');
               }
             } else if (newProfile) {
-              setUser({
+              const userProfile = {
                 id: newProfile.id,
                 email: newProfile.email,
                 full_name: newProfile.full_name || undefined,
@@ -77,11 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 bio: newProfile.bio || undefined,
                 is_active: newProfile.is_active || false,
                 last_login: newProfile.last_login || undefined,
-              });
+              };
+              setUser(userProfile);
+              setProfile(userProfile);
             }
           }
         } else if (profile) {
-          setUser({
+          const userProfile = {
             id: profile.id,
             email: profile.email,
             full_name: profile.full_name || undefined,
@@ -92,7 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             bio: profile.bio || undefined,
             is_active: profile.is_active || false,
             last_login: profile.last_login || undefined,
-          });
+          };
+          setUser(userProfile);
+          setProfile(userProfile);
         }
       }
       setLoading(false);
@@ -138,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   console.error('RLS policy violation on auth change - user may not be properly authenticated');
                 }
               } else if (newProfile) {
-                setUser({
+                const userProfile = {
                   id: newProfile.id,
                   email: newProfile.email,
                   full_name: newProfile.full_name || undefined,
@@ -149,11 +154,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   bio: newProfile.bio || undefined,
                   is_active: newProfile.is_active || false,
                   last_login: newProfile.last_login || undefined,
-                });
+                };
+                setUser(userProfile);
+                setProfile(userProfile);
               }
             }
           } else if (profile) {
-            setUser({
+            const userProfile = {
               id: profile.id,
               email: profile.email,
               full_name: profile.full_name || undefined,
@@ -164,10 +171,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               bio: profile.bio || undefined,
               is_active: profile.is_active || false,
               last_login: profile.last_login || undefined,
-            });
+            };
+            setUser(userProfile);
+            setProfile(userProfile);
           }
         } else {
           setUser(null);
+          setProfile(null);
         }
         setLoading(false);
       }
@@ -177,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, profile, loading }}>
       {children}
     </AuthContext.Provider>
   );

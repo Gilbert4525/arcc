@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  FileCheck,
 } from 'lucide-react';
 
 const navigationItems = [
@@ -54,6 +55,12 @@ const navigationItems = [
     roles: ['admin', 'board_member'],
   },
   {
+    title: 'Minutes',
+    href: '/dashboard/minutes',
+    icon: FileCheck,
+    roles: ['admin', 'board_member'],
+  },
+  {
     title: 'Categories',
     href: '/dashboard/categories',
     icon: FolderOpen,
@@ -63,6 +70,12 @@ const navigationItems = [
     title: 'User Management',
     href: '/admin/users',
     icon: Users,
+    roles: ['admin'],
+  },
+  {
+    title: 'Admin Minutes',
+    href: '/admin/minutes',
+    icon: FileCheck,
     roles: ['admin'],
   },
   {

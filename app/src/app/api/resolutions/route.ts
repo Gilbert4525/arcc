@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ResolutionsService } from '@/lib/database';
+import { ResolutionsService, getDatabaseServices } from '@/lib/database';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // GET /api/resolutions - Get resolutions with filtering
@@ -102,6 +102,15 @@ export async function POST(request: NextRequest) {
     const resolution = await resolutionsService.createResolution(resolutionData);
     if (!resolution) {
       return NextResponse.json({ error: 'Failed to create resolution' }, { status: 500 });
+    }
+
+    // Create notifications (don't let this fail the main operation)
+    try {
+      const { notifications } = getDatabaseServices(supabase);
+      await notifications.notifyResolutionCreated(resolution, user.id);
+    } catch (notificationError) {
+      console.error('Failed to create resolution notification:', notificationError);
+      // Continue - don't fail the main operation
     }
 
     return NextResponse.json({ resolution }, { status: 201 });

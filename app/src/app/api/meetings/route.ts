@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MeetingsService } from '@/lib/database';
+import { MeetingsService, getDatabaseServices } from '@/lib/database';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // GET /api/meetings - Get meetings with filtering
@@ -123,6 +123,15 @@ export async function POST(request: NextRequest) {
     if (!participantsAdded) {
       console.warn('Failed to add participants to meeting:', meeting.id);
       // Don't fail the request, just log the warning
+    }
+
+    // Create notifications (don't let this fail the main operation)
+    try {
+      const { notifications } = getDatabaseServices(supabase);
+      await notifications.notifyMeetingCreated(meeting, user.id);
+    } catch (notificationError) {
+      console.error('Failed to create meeting notification:', notificationError);
+      // Continue - don't fail the main operation
     }
 
     return NextResponse.json({ meeting }, { status: 201 });

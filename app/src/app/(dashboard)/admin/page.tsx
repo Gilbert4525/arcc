@@ -15,6 +15,7 @@ import {
   Activity
 } from 'lucide-react';
 import { getDatabaseServices } from '@/lib/database';
+import { TestNotificationButton } from '@/components/admin/TestNotificationButton';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -311,11 +312,12 @@ export default async function AdminPage() {
                 <span className="font-medium">Last Backup</span>
                 <span className="text-sm text-muted-foreground">2 hours ago</span>
               </div>
-              <div className="pt-4">
+              <div className="pt-4 space-y-2">
                 <Button variant="outline" className="w-full">
                   <Settings className="mr-2 h-4 w-4" />
                   System Settings
                 </Button>
+                <TestNotificationButton />
               </div>
             </div>
           </CardContent>

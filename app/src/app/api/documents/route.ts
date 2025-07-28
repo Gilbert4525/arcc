@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DocumentsService } from '@/lib/database';
+import { DocumentsService, getDatabaseServices } from '@/lib/database';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // GET /api/documents - Get documents with pagination and filtering
@@ -95,6 +95,20 @@ export async function POST(request: NextRequest) {
     const document = await documentsService.createDocument(documentData);
     if (!document) {
       return NextResponse.json({ error: 'Failed to create document' }, { status: 500 });
+    }
+
+    // Create notifications (don't let this fail the main operation)
+    try {
+      const { notifications } = getDatabaseServices(supabase);
+      await notifications.notifyDocumentCreated(document, user.id);
+      
+      // If document is published immediately, also send publish notification
+      if (is_published) {
+        await notifications.notifyDocumentPublished(document, user.id);
+      }
+    } catch (notificationError) {
+      console.error('Failed to create document notification:', notificationError);
+      // Continue - don't fail the main operation
     }
 
     return NextResponse.json({ document }, { status: 201 });
