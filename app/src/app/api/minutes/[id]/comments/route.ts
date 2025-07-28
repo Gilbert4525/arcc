@@ -6,16 +6,17 @@ import { requireAdmin } from '@/lib/auth/middleware';
 // GET /api/minutes/[id]/comments - Get voting comments (admin only)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const requestId = Math.random().toString(36).substring(7);
   const startTime = Date.now();
   
   try {
-    console.log(`[${requestId}] Fetching comments for minutes ${params.id}`);
+    const resolvedParams = await params;
+    console.log(`[${requestId}] Fetching comments for minutes ${resolvedParams.id}`);
 
     // Validate request parameters
-    if (!params.id) {
+    if (!resolvedParams.id) {
       console.error(`[${requestId}] Missing minutes ID in request`);
       return NextResponse.json({ 
         error: 'Missing minutes ID',
@@ -32,7 +33,7 @@ export async function GET(
     }
 
     const { user } = authResult;
-    console.log(`[${requestId}] Admin user ${user.id} requesting comments for minutes ${params.id}`);
+    console.log(`[${requestId}] Admin user ${user.id} requesting comments for minutes ${resolvedParams.id}`);
 
     const supabase = await createServerSupabaseClient();
     const minutesService = new MinutesService(supabase);
@@ -45,7 +46,7 @@ export async function GET(
     // Check if minutes exists first
     let minutes;
     try {
-      minutes = await minutesService.getMinutesById(params.id);
+      minutes = await minutesService.getMinutesById(resolvedParams.id);
     } catch (dbError) {
       console.error(`[${requestId}] Database error fetching minutes:`, dbError);
       return NextResponse.json({ 
@@ -56,19 +57,19 @@ export async function GET(
     }
 
     if (!minutes) {
-      console.error(`[${requestId}] Minutes not found: ${params.id}`);
+      console.error(`[${requestId}] Minutes not found: ${resolvedParams.id}`);
       return NextResponse.json({ 
         error: 'Minutes not found',
         code: 'MINUTES_NOT_FOUND',
         requestId,
-        minutesId: params.id 
+        minutesId: resolvedParams.id 
       }, { status: 404 });
     }
 
     // Fetch comments and statistics
     let result;
     try {
-      result = await minutesService.getMinutesComments(params.id, withComments);
+      result = await minutesService.getMinutesComments(resolvedParams.id, withComments);
     } catch (dbError) {
       console.error(`[${requestId}] Database error fetching comments:`, dbError);
       return NextResponse.json({ 

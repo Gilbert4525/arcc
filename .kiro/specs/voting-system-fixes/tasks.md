@@ -10,6 +10,8 @@
 
 
 
+
+
 - [ ] 2. Improve vote API endpoint error handling and response format
   - Enhance error handling in `/api/minutes/[id]/vote` route
   - Add proper logging for debugging vote submission issues

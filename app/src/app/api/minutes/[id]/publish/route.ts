@@ -5,9 +5,10 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 // POST /api/minutes/[id]/publish - Publish minutes for voting
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -46,7 +47,7 @@ export async function POST(
     const minutesService = new MinutesService(supabase);
     
     // Check if minutes exists and is in draft status
-    const currentMinutes = await minutesService.getMinutesById(params.id, false);
+    const currentMinutes = await minutesService.getMinutesById(resolvedParams.id, false);
     if (!currentMinutes) {
       return NextResponse.json({ error: 'Minutes not found' }, { status: 404 });
     }
@@ -58,7 +59,7 @@ export async function POST(
     }
 
     // Publish minutes for voting
-    const minutes = await minutesService.publishMinutesForVoting(params.id, voting_deadline);
+    const minutes = await minutesService.publishMinutesForVoting(resolvedParams.id, voting_deadline);
     if (!minutes) {
       return NextResponse.json({ error: 'Failed to publish minutes' }, { status: 500 });
     }

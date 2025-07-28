@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
+// Define PushSubscription type for web push
+interface PushSubscription {
+  endpoint: string;
+  keys?: {
+    p256dh: string;
+    auth: string;
+  };
+}
+
 // POST /api/notifications/send-push - Send web push notification (internal API)
 export async function POST(request: NextRequest) {
   try {
@@ -81,15 +90,23 @@ export async function POST(request: NextRequest) {
       // Send notifications in batches
       const batchSize = 10;
       const subscriptions = profiles
-        .filter(profile => profile.push_subscription)
-        .map(profile => profile.push_subscription as PushSubscription);
+        .filter(profile => (profile as any).push_subscription)
+        .map(profile => (profile as any).push_subscription as PushSubscription);
 
       for (let i = 0; i < subscriptions.length; i += batchSize) {
         const batch = subscriptions.slice(i, i + batchSize);
         
         const promises = batch.map(async (subscription) => {
           try {
-            await webpushModule.sendNotification(subscription, payload, options);
+            // Convert to web-push compatible format
+            const webPushSubscription = {
+              endpoint: subscription.endpoint,
+              keys: {
+                p256dh: subscription.keys?.p256dh || '',
+                auth: subscription.keys?.auth || ''
+              }
+            };
+            await webpushModule.sendNotification(webPushSubscription, payload, options);
             return true;
           } catch (error: any) {
             console.error('Failed to send web push notification:', error);

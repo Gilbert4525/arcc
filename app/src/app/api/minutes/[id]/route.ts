@@ -5,9 +5,10 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 // GET /api/minutes/[id] - Get specific minutes
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -39,21 +40,21 @@ export async function GET(
 
     if (includeComments) {
       // Admin view with full comment details
-      const result = await minutesService.getMinutesWithComments(params.id);
+      const result = await minutesService.getMinutesWithComments(resolvedParams.id);
       if (!result) {
         return NextResponse.json({ error: 'Minutes not found' }, { status: 404 });
       }
       return NextResponse.json(result);
     } else if (withVoting || includeVotes) {
       // Standard voting details view
-      const result = await minutesService.getMinutesWithVotingDetails(params.id);
+      const result = await minutesService.getMinutesWithVotingDetails(resolvedParams.id);
       if (!result) {
         return NextResponse.json({ error: 'Minutes not found' }, { status: 404 });
       }
       return NextResponse.json(result);
     } else {
       // Basic minutes view
-      const minutes = await minutesService.getMinutesById(params.id);
+      const minutes = await minutesService.getMinutesById(resolvedParams.id);
       if (!minutes) {
         return NextResponse.json({ error: 'Minutes not found' }, { status: 404 });
       }
@@ -68,9 +69,10 @@ export async function GET(
 // PUT /api/minutes/[id] - Update minutes
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -92,7 +94,7 @@ export async function PUT(
     const minutesService = new MinutesService(supabase);
     const body = await request.json();
 
-    const minutes = await minutesService.updateMinutes(params.id, body);
+    const minutes = await minutesService.updateMinutes(resolvedParams.id, body);
     if (!minutes) {
       return NextResponse.json({ error: 'Failed to update minutes' }, { status: 500 });
     }
@@ -107,9 +109,10 @@ export async function PUT(
 // DELETE /api/minutes/[id] - Delete minutes
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -129,7 +132,7 @@ export async function DELETE(
     }
 
     const minutesService = new MinutesService(supabase);
-    const success = await minutesService.deleteMinutes(params.id);
+    const success = await minutesService.deleteMinutes(resolvedParams.id);
 
     if (!success) {
       return NextResponse.json({ error: 'Failed to delete minutes' }, { status: 500 });

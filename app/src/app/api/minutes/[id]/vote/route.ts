@@ -6,16 +6,17 @@ import { requireBoardMember, rateLimit, sanitizeComment } from '@/lib/auth/middl
 // POST /api/minutes/[id]/vote - Vote on minutes
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const startTime = Date.now();
   const requestId = Math.random().toString(36).substring(7);
   
   try {
-    console.log(`[${requestId}] Starting vote submission for minutes ${params.id}`);
+    const resolvedParams = await params;
+    console.log(`[${requestId}] Starting vote submission for minutes ${resolvedParams.id}`);
 
     // Validate request parameters
-    if (!params.id) {
+    if (!resolvedParams.id) {
       console.error(`[${requestId}] Missing minutes ID in request`);
       return NextResponse.json({ 
         error: 'Missing minutes ID',
@@ -32,10 +33,10 @@ export async function POST(
     }
     const { user } = authResult;
 
-    console.log(`[${requestId}] User ${user.id} attempting to vote on minutes ${params.id}`);
+    console.log(`[${requestId}] User ${user.id} attempting to vote on minutes ${resolvedParams.id}`);
 
     // Rate limiting - 5 votes per minute per user
-    const rateLimitKey = `vote:${user.id}:${params.id}`;
+    const rateLimitKey = `vote:${user.id}:${resolvedParams.id}`;
     if (!rateLimit(rateLimitKey, 5, 60000)) {
       console.warn(`[${requestId}] Rate limit exceeded for user ${user.id}`);
       return NextResponse.json({ 
@@ -92,7 +93,7 @@ export async function POST(
     // Check if minutes exists and is open for voting
     let minutes;
     try {
-      minutes = await minutesService.getMinutesById(params.id);
+      minutes = await minutesService.getMinutesById(resolvedParams.id);
     } catch (dbError) {
       console.error(`[${requestId}] Database error fetching minutes:`, dbError);
       return NextResponse.json({ 
@@ -103,12 +104,12 @@ export async function POST(
     }
 
     if (!minutes) {
-      console.error(`[${requestId}] Minutes not found: ${params.id}`);
+      console.error(`[${requestId}] Minutes not found: ${resolvedParams.id}`);
       return NextResponse.json({ 
         error: 'Minutes not found',
         code: 'MINUTES_NOT_FOUND',
         requestId,
-        minutesId: params.id 
+        minutesId: resolvedParams.id 
       }, { status: 404 });
     }
 
@@ -140,12 +141,12 @@ export async function POST(
     while (retryCount < maxRetries) {
       try {
         console.log(`[${requestId}] Submitting vote (attempt ${retryCount + 1}):`, { 
-          minutesId: params.id, 
+          minutesId: resolvedParams.id, 
           vote, 
           hasComments: !!sanitizedComments 
         });
         
-        voteResult = await minutesService.voteOnMinutes(params.id, vote, sanitizedComments || undefined);
+        voteResult = await minutesService.voteOnMinutes(resolvedParams.id, vote, sanitizedComments || undefined);
         break; // Success, exit retry loop
       } catch (voteError) {
         retryCount++;
@@ -180,7 +181,7 @@ export async function POST(
     // Get updated minutes with voting results
     let updatedMinutes;
     try {
-      updatedMinutes = await minutesService.getMinutesById(params.id);
+      updatedMinutes = await minutesService.getMinutesById(resolvedParams.id);
     } catch (updateError) {
       console.error(`[${requestId}] Failed to fetch updated minutes:`, updateError);
       // Don't fail the request, just log the error
@@ -233,15 +234,16 @@ export async function POST(
 // GET /api/minutes/[id]/vote - Get user's vote for minutes
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const requestId = Math.random().toString(36).substring(7);
   
   try {
-    console.log(`[${requestId}] Fetching user vote for minutes ${params.id}`);
+    const resolvedParams = await params;
+    console.log(`[${requestId}] Fetching user vote for minutes ${resolvedParams.id}`);
 
     // Validate request parameters
-    if (!params.id) {
+    if (!resolvedParams.id) {
       console.error(`[${requestId}] Missing minutes ID in request`);
       return NextResponse.json({ 
         error: 'Missing minutes ID',
@@ -262,13 +264,13 @@ export async function GET(
       }, { status: 401 });
     }
 
-    console.log(`[${requestId}] User ${user.id} fetching vote for minutes ${params.id}`);
+    console.log(`[${requestId}] User ${user.id} fetching vote for minutes ${resolvedParams.id}`);
 
     const minutesService = new MinutesService(supabase);
     
     let userVote;
     try {
-      userVote = await minutesService.getUserVote(params.id);
+      userVote = await minutesService.getUserVote(resolvedParams.id);
     } catch (dbError) {
       console.error(`[${requestId}] Database error fetching user vote:`, dbError);
       return NextResponse.json({ 

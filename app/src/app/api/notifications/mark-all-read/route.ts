@@ -12,32 +12,14 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    try {
-      const { notifications: notificationsService } = getDatabaseServices(supabase);
-      const success = await notificationsService.markAllAsRead(user.id);
+    const { notifications: notificationsService } = getDatabaseServices(supabase);
+    const success = await notificationsService.markAllAsRead(user.id);
 
-      if (!success) {
-        return NextResponse.json({ error: 'Failed to mark all notifications as read' }, { status: 500 });
-      }
-
-      return NextResponse.json({ message: 'All notifications marked as read' });
-    } catch (serviceError) {
-      console.error('Error from notifications service:', serviceError);
-      
-      // Fallback: Direct database update if service fails
-      const { error } = await supabase
-        .from('notifications')
-        .update({ 
-          is_read: true, 
-          updated_at: new Date().toISOString() 
-        })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-
-      if (error) throw error;
-
-      return NextResponse.json({ message: 'All notifications marked as read' });
+    if (!success) {
+      return NextResponse.json({ error: 'Failed to mark all notifications as read' }, { status: 500 });
     }
+
+    return NextResponse.json({ message: 'All notifications marked as read' });
   } catch (error) {
     console.error('Error in POST /api/notifications/mark-all-read:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
