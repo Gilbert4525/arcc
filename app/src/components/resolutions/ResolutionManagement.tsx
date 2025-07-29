@@ -61,8 +61,10 @@ import {
   ThumbsDown,
   Minus,
   AlertTriangle,
+  MessageSquare,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { AdminResolutionCommentView } from './AdminResolutionCommentView';
 
 type Resolution = Database['public']['Tables']['resolutions']['Row'] & {
   profiles?: { full_name: string | null; email: string } | null;
@@ -103,8 +105,10 @@ export function ResolutionManagement({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
+  const [isCommentViewOpen, setIsCommentViewOpen] = useState(false);
   const [editingResolution, setEditingResolution] = useState<Resolution | null>(null);
   const [votingResolution, setVotingResolution] = useState<Resolution | null>(null);
+  const [commentViewResolution, setCommentViewResolution] = useState<Resolution | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -452,6 +456,11 @@ export function ResolutionManagement({
     setIsVoteDialogOpen(true);
   };
 
+  const openCommentView = (resolution: Resolution) => {
+    setCommentViewResolution(resolution);
+    setIsCommentViewOpen(true);
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header Actions */}
@@ -734,6 +743,18 @@ export function ResolutionManagement({
                         Vote
                       </Button>
                     )}
+
+                    {userRole === 'admin' && (resolution.status === 'voting' || resolution.status === 'approved' || resolution.status === 'rejected') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openCommentView(resolution)}
+                        className="h-8 px-2 text-xs"
+                      >
+                        <MessageSquare className="h-3 w-3 mr-1" />
+                        Comments
+                      </Button>
+                    )}
                     
                     {canEditResolution(resolution) && (
                       <>
@@ -906,6 +927,18 @@ export function ResolutionManagement({
                         >
                           <Vote className="h-4 w-4 mr-1" />
                           Vote
+                        </Button>
+                      )}
+
+                      {/* View Comments Button for Admin */}
+                      {userRole === 'admin' && (resolution.status === 'voting' || resolution.status === 'approved' || resolution.status === 'rejected') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openCommentView(resolution)}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Comments
                         </Button>
                       )}
                       
@@ -1180,6 +1213,21 @@ export function ResolutionManagement({
             </form>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Admin Comment View Dialog */}
+      {commentViewResolution && (
+        <AdminResolutionCommentView
+          open={isCommentViewOpen}
+          onOpenChange={setIsCommentViewOpen}
+          resolution={{
+            id: commentViewResolution.id,
+            title: commentViewResolution.title,
+            resolution_number: commentViewResolution.resolution_number,
+            status: commentViewResolution.status || 'draft',
+            created_at: commentViewResolution.created_at || new Date().toISOString()
+          }}
+        />
       )}
     </div>
   );

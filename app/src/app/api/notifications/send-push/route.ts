@@ -36,23 +36,23 @@ export async function POST(request: NextRequest) {
       .not('push_subscription', 'is', null);
 
     if (error || !profiles || profiles.length === 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'No users with push subscriptions found',
         successful: 0,
-        failed: 0 
+        failed: 0
       });
     }
 
     // Check if web push is configured
     const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-    
-    if (!vapidPublicKey || !vapidPrivateKey || 
-        vapidPublicKey === 'placeholder-key' || vapidPrivateKey === 'placeholder-key') {
-      return NextResponse.json({ 
+
+    if (!vapidPublicKey || !vapidPrivateKey ||
+      vapidPublicKey === 'placeholder-key' || vapidPrivateKey === 'placeholder-key') {
+      return NextResponse.json({
         message: 'Web push not configured',
         successful: 0,
-        failed: profiles.length 
+        failed: profiles.length
       });
     }
 
@@ -61,10 +61,10 @@ export async function POST(request: NextRequest) {
     try {
       webpush = await import('web-push');
       const webpushModule = webpush.default || webpush;
-      
+
       const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@arcboard.com';
       webpushModule.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-      
+
       const payload = JSON.stringify({
         title: notificationData.title,
         body: notificationData.message,
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
       for (let i = 0; i < subscriptions.length; i += batchSize) {
         const batch = subscriptions.slice(i, i + batchSize);
-        
+
         const promises = batch.map(async (subscription) => {
           try {
             // Convert to web-push compatible format
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         });
 
         const results = await Promise.allSettled(promises);
-        
+
         results.forEach((result) => {
           if (result.status === 'fulfilled' && result.value) {
             successful++;
@@ -130,18 +130,18 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Web push notifications sent',
         successful,
-        failed 
+        failed
       });
 
     } catch (importError) {
       console.error('Failed to import web-push:', importError);
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Web push module not available',
         successful: 0,
-        failed: profiles.length 
+        failed: profiles.length
       });
     }
 
