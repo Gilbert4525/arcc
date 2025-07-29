@@ -30,21 +30,20 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
-import { Database } from '@/types/database';
 
 interface VoteWithProfile {
   id: string;
   resolution_id: string;
   voter_id: string;
   vote: 'for' | 'against' | 'abstain';
-  vote_reason?: string;
-  voted_at: string;
-  created_at: string;
+  vote_reason?: string | null;
+  voted_at: string | null;
+  created_at: string | null;
   voter: {
     id: string;
-    full_name: string;
+    full_name: string | null;
     email: string;
-    position?: string;
+    position?: string | null;
   };
 }
 
@@ -124,10 +123,16 @@ export function AdminResolutionCommentView({ open, onOpenChange, resolution }: A
       const allVotes = votesData || [];
       console.log('AdminResolutionCommentView - Fetched votes:', allVotes.length);
 
-      // Filter votes if showOnlyComments is true
-      const filteredVotes = showOnlyComments 
+      // Filter votes if showOnlyComments is true and cast vote types
+      const filteredVotes = (showOnlyComments 
         ? allVotes.filter(vote => vote.vote_reason && vote.vote_reason.trim())
-        : allVotes;
+        : allVotes
+      ).map(vote => ({
+        ...vote,
+        vote: vote.vote as 'for' | 'against' | 'abstain',
+        voted_at: vote.voted_at || new Date().toISOString(),
+        created_at: vote.created_at || new Date().toISOString()
+      }));
 
       setVotes(filteredVotes);
 
@@ -184,11 +189,13 @@ export function AdminResolutionCommentView({ open, onOpenChange, resolution }: A
     );
   };
 
-  const formatDateTime = (dateString: string) => {
+  const formatDateTime = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Unknown date';
     return new Date(dateString).toLocaleString();
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Unknown date';
     return new Date(dateString).toLocaleDateString();
   };
 
@@ -204,13 +211,13 @@ export function AdminResolutionCommentView({ open, onOpenChange, resolution }: A
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(vote => 
-        vote.voter.full_name.toLowerCase().includes(query) ||
+        (vote.voter.full_name && vote.voter.full_name.toLowerCase().includes(query)) ||
         vote.voter.email.toLowerCase().includes(query) ||
         (vote.vote_reason && vote.vote_reason.toLowerCase().includes(query))
       );
     }
 
-    return filtered.sort((a, b) => new Date(b.voted_at).getTime() - new Date(a.voted_at).getTime());
+    return filtered.sort((a, b) => new Date(b.voted_at || new Date()).getTime() - new Date(a.voted_at || new Date()).getTime());
   };
 
   const getFilteredVotes = () => {

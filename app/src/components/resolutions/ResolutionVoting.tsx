@@ -16,7 +16,6 @@ import {
     ThumbsDown,
     Minus,
     FileText,
-    Users,
     Vote
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -24,8 +23,8 @@ import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 
 type Resolution = Database['public']['Tables']['resolutions']['Row'] & {
-  profiles?: { full_name: string | null; email: string } | null;
-  categories?: { name: string; color: string | null } | null;
+    profiles?: { full_name: string | null; email: string } | null;
+    categories?: { name: string; color: string | null } | null;
 };
 
 interface UserVote {
@@ -51,10 +50,10 @@ export function ResolutionVoting() {
     const fetchResolutions = async () => {
         const fetchId = Math.random().toString(36).substring(7);
         console.log(`[${fetchId}] Starting fetchResolutions...`);
-        
+
         try {
             setLoading(true);
-            
+
             // Get current user
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
@@ -67,7 +66,7 @@ export function ResolutionVoting() {
                 .from('resolutions')
                 .select(`
                     *,
-                    profiles:created_by(full_name, email),
+                    profiles!created_by(full_name, email),
                     categories(name, color)
                 `)
                 .in('status', ['voting', 'approved', 'rejected'])
@@ -83,7 +82,7 @@ export function ResolutionVoting() {
             // Fetch user votes for voting resolutions
             const votingResolutions = (allResolutions || []).filter(r => r.status === 'voting');
             console.log(`[${fetchId}] Found ${votingResolutions.length} voting resolutions`);
-            
+
             const votes: Record<string, UserVote> = {};
             const comments: Record<string, string> = {};
 
@@ -103,7 +102,12 @@ export function ResolutionVoting() {
                     }
 
                     if (voteData) {
-                        votes[resolution.id] = voteData;
+                        votes[resolution.id] = {
+                            id: voteData.id,
+                            vote: voteData.vote as 'for' | 'against' | 'abstain',
+                            vote_reason: voteData.vote_reason || undefined,
+                            voted_at: voteData.voted_at || new Date().toISOString()
+                        };
                         comments[resolution.id] = voteData.vote_reason || '';
                         console.log(`[${fetchId}] Found existing vote for ${resolution.id}:`, voteData.vote);
                     } else {
@@ -117,9 +121,9 @@ export function ResolutionVoting() {
             console.log(`[${fetchId}] Setting user votes:`, votes);
             setUserVotes(votes);
             setVoteComments(prev => ({ ...prev, ...comments }));
-            
+
             console.log(`[${fetchId}] fetchResolutions completed successfully`);
-            
+
         } catch (error) {
             console.error(`[${fetchId}] Error fetching resolutions:`, error);
             toast({
@@ -135,7 +139,7 @@ export function ResolutionVoting() {
     const handleVote = async (resolutionId: string, vote: 'for' | 'against' | 'abstain') => {
         const voteId = Math.random().toString(36).substring(7);
         console.log(`[${voteId}] Starting vote submission:`, { resolutionId, vote, hasComment: !!voteComments[resolutionId] });
-        
+
         try {
             setVotingLoading(resolutionId);
 
@@ -194,7 +198,7 @@ export function ResolutionVoting() {
             const currentVotesFor = resolution.votes_for || 0;
             const currentVotesAgainst = resolution.votes_against || 0;
             const currentVotesAbstain = resolution.votes_abstain || 0;
-            
+
             const updates: Partial<Resolution> = {};
             if (vote === 'for') updates.votes_for = currentVotesFor + 1;
             if (vote === 'against') updates.votes_against = currentVotesAgainst + 1;
@@ -205,13 +209,13 @@ export function ResolutionVoting() {
             const newVotesFor = vote === 'for' ? currentVotesFor + 1 : currentVotesFor;
             const totalEligibleVoters = resolution.total_eligible_voters || 1;
             const minimumQuorum = resolution.minimum_quorum || 50;
-            
+
             if (totalVotes >= totalEligibleVoters) {
                 // Determine if resolution passes
                 const majorityRequired = resolution.requires_majority;
                 const quorumMet = (totalVotes / totalEligibleVoters) * 100 >= minimumQuorum;
                 const majorityVotes = majorityRequired ? newVotesFor > (totalVotes / 2) : newVotesFor > 0;
-                
+
                 if (quorumMet && majorityVotes) {
                     updates.status = 'approved';
                     updates.passed_at = new Date().toISOString();
@@ -234,10 +238,15 @@ export function ResolutionVoting() {
             // Update local state
             setUserVotes(prev => ({
                 ...prev,
-                [resolutionId]: voteData
+                [resolutionId]: {
+                    id: voteData.id,
+                    vote: voteData.vote as 'for' | 'against' | 'abstain',
+                    vote_reason: voteData.vote_reason || undefined,
+                    voted_at: voteData.voted_at || new Date().toISOString()
+                }
             }));
 
-            setResolutions(prev => prev.map(r => 
+            setResolutions(prev => prev.map(r =>
                 r.id === resolutionId ? { ...r, ...updates } : r
             ));
 
@@ -253,7 +262,7 @@ export function ResolutionVoting() {
 
         } catch (error) {
             console.error(`[${voteId}] Error casting vote:`, error);
-            
+
             toast({
                 title: 'Error',
                 description: error instanceof Error ? error.message : 'Failed to submit vote',
@@ -290,7 +299,8 @@ export function ResolutionVoting() {
             archived: { label: 'Archived', variant: 'secondary' as const, icon: XCircle },
         };
 
-        const config = statusConfig[status || 'draft'];
+        const statusKey = (status || 'draft') as keyof typeof statusConfig;
+        const config = statusConfig[statusKey];
         const Icon = config.icon;
 
         return (
@@ -324,11 +334,8 @@ export function ResolutionVoting() {
         return new Date(deadline) < new Date();
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString();
-    };
-
-    const formatDateTime = (dateString: string) => {
+    const formatDateTime = (dateString: string | null | undefined) => {
+        if (!dateString) return 'Unknown date';
         return new Date(dateString).toLocaleString();
     };
 
@@ -364,149 +371,149 @@ export function ResolutionVoting() {
                     <div className="grid gap-4">
                         {votingResolutions.map((resolution) => {
                             const userVote = userVotes[resolution.id];
-                            const isExpired = isVotingExpired(resolution.voting_deadline);
+                            const isExpired = isVotingExpired(resolution.voting_deadline ?? undefined);
                             const canVote = !isExpired;
 
                             return (
                                 <Card key={resolution.id} className="hover:shadow-md transition-shadow">
-                                    <CardHeader>
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <CardTitle className="text-lg">{resolution.title}</CardTitle>
-                                                <CardDescription className="flex items-center gap-4 mt-2">
-                                                    <span className="flex items-center gap-1">
-                                                        <FileText className="h-4 w-4" />
-                                                        {resolution.resolution_number}
-                                                    </span>
-                                                    {resolution.voting_deadline && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="h-4 w-4" />
-                                                            Deadline: {formatDateTime(resolution.voting_deadline)}
-                                                        </span>
-                                                    )}
-                                                </CardDescription>
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <CardTitle className="text-lg">{resolution.title}</CardTitle>
+                                        <CardDescription className="flex items-center gap-4 mt-2">
+                                            <span className="flex items-center gap-1">
+                                                <FileText className="h-4 w-4" />
+                                                {resolution.resolution_number}
+                                            </span>
+                                            {resolution.voting_deadline && (
+                                                <span className="flex items-center gap-1">
+                                                    <Clock className="h-4 w-4" />
+                                                    Deadline: {formatDateTime(resolution.voting_deadline)}
+                                                </span>
+                                            )}
+                                        </CardDescription>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {userVote && getVoteBadge(userVote.vote)}
+                                        {getStatusBadge(resolution.status)}
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {/* Content Preview */}
+                                    <div>
+                                        <p className="text-sm text-gray-600 line-clamp-3">
+                                            {resolution.content.substring(0, 300)}...
+                                        </p>
+                                    </div>
+
+                                    {/* Voting Progress */}
+                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h4 className="font-medium text-blue-900">Voting Progress</h4>
+                                            <span className="text-sm text-blue-700">
+                                                {((resolution.votes_for || 0) > 0
+                                                    ? (((resolution.votes_for || 0) / Math.max(1, (resolution.votes_for || 0) + (resolution.votes_against || 0) + (resolution.votes_abstain || 0))) * 100).toFixed(1)
+                                                    : '0.0'
+                                                )}% for
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+                                            <div className="text-center">
+                                                <div className="font-medium text-green-600">{resolution.votes_for || 0}</div>
+                                                <div className="text-gray-600">For</div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                {userVote && getVoteBadge(userVote.vote)}
-                                                {getStatusBadge(resolution.status)}
+                                            <div className="text-center">
+                                                <div className="font-medium text-red-600">{resolution.votes_against || 0}</div>
+                                                <div className="text-gray-600">Against</div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="font-medium text-gray-600">{resolution.votes_abstain || 0}</div>
+                                                <div className="text-gray-600">Abstain</div>
                                             </div>
                                         </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-4">
-                                            {/* Content Preview */}
-                                            <div>
-                                                <p className="text-sm text-gray-600 line-clamp-3">
-                                                    {resolution.content.substring(0, 300)}...
+
+                                        {/* Voting Actions */}
+                                        {canVote && !userVote && (
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <Label htmlFor={`comment-${resolution.id}`} className="text-sm font-medium">
+                                                        Comment (optional)
+                                                    </Label>
+                                                    <Textarea
+                                                        id={`comment-${resolution.id}`}
+                                                        placeholder="Add a comment about your vote..."
+                                                        value={voteComments[resolution.id] || ''}
+                                                        onChange={(e) => setVoteComments(prev => ({
+                                                            ...prev,
+                                                            [resolution.id]: e.target.value
+                                                        }))}
+                                                        rows={2}
+                                                        className="mt-1"
+                                                    />
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => handleVote(resolution.id, 'for')}
+                                                        disabled={votingLoading === resolution.id}
+                                                        className="bg-green-600 hover:bg-green-700"
+                                                    >
+                                                        <ThumbsUp className="h-4 w-4 mr-1" />
+                                                        For
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="destructive"
+                                                        onClick={() => handleVote(resolution.id, 'against')}
+                                                        disabled={votingLoading === resolution.id}
+                                                    >
+                                                        <ThumbsDown className="h-4 w-4 mr-1" />
+                                                        Against
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleVote(resolution.id, 'abstain')}
+                                                        disabled={votingLoading === resolution.id}
+                                                    >
+                                                        <Minus className="h-4 w-4 mr-1" />
+                                                        Abstain
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Already Voted */}
+                                        {userVote && (
+                                            <div className="bg-white p-3 rounded border">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm font-medium">Your vote:</span>
+                                                    {getVoteBadge(userVote.vote)}
+                                                </div>
+                                                {userVote.vote_reason && (
+                                                    <p className="text-sm text-gray-600 mt-2">{userVote.vote_reason}</p>
+                                                )}
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Voted on {formatDateTime(userVote.voted_at)}
                                                 </p>
                                             </div>
+                                        )}
 
-                                            {/* Voting Progress */}
-                                            <div className="bg-blue-50 p-4 rounded-lg">
-                                                <div className="flex justify-between items-center mb-3">
-                                                    <h4 className="font-medium text-blue-900">Voting Progress</h4>
-                                                    <span className="text-sm text-blue-700">
-                                                        {((resolution.votes_for || 0) > 0 
-                                                            ? (((resolution.votes_for || 0) / Math.max(1, (resolution.votes_for || 0) + (resolution.votes_against || 0) + (resolution.votes_abstain || 0))) * 100).toFixed(1)
-                                                            : '0.0'
-                                                        )}% for
-                                                    </span>
-                                                </div>
-
-                                                <div className="grid grid-cols-3 gap-4 text-sm mb-4">
-                                                    <div className="text-center">
-                                                        <div className="font-medium text-green-600">{resolution.votes_for || 0}</div>
-                                                        <div className="text-gray-600">For</div>
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <div className="font-medium text-red-600">{resolution.votes_against || 0}</div>
-                                                        <div className="text-gray-600">Against</div>
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <div className="font-medium text-gray-600">{resolution.votes_abstain || 0}</div>
-                                                        <div className="text-gray-600">Abstain</div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Voting Actions */}
-                                                {canVote && !userVote && (
-                                                    <div className="space-y-3">
-                                                        <div>
-                                                            <Label htmlFor={`comment-${resolution.id}`} className="text-sm font-medium">
-                                                                Comment (optional)
-                                                            </Label>
-                                                            <Textarea
-                                                                id={`comment-${resolution.id}`}
-                                                                placeholder="Add a comment about your vote..."
-                                                                value={voteComments[resolution.id] || ''}
-                                                                onChange={(e) => setVoteComments(prev => ({
-                                                                    ...prev,
-                                                                    [resolution.id]: e.target.value
-                                                                }))}
-                                                                rows={2}
-                                                                className="mt-1"
-                                                            />
-                                                        </div>
-
-                                                        <div className="flex gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => handleVote(resolution.id, 'for')}
-                                                                disabled={votingLoading === resolution.id}
-                                                                className="bg-green-600 hover:bg-green-700"
-                                                            >
-                                                                <ThumbsUp className="h-4 w-4 mr-1" />
-                                                                For
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="destructive"
-                                                                onClick={() => handleVote(resolution.id, 'against')}
-                                                                disabled={votingLoading === resolution.id}
-                                                            >
-                                                                <ThumbsDown className="h-4 w-4 mr-1" />
-                                                                Against
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleVote(resolution.id, 'abstain')}
-                                                                disabled={votingLoading === resolution.id}
-                                                            >
-                                                                <Minus className="h-4 w-4 mr-1" />
-                                                                Abstain
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Already Voted */}
-                                                {userVote && (
-                                                    <div className="bg-white p-3 rounded border">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm font-medium">Your vote:</span>
-                                                            {getVoteBadge(userVote.vote)}
-                                                        </div>
-                                                        {userVote.vote_reason && (
-                                                            <p className="text-sm text-gray-600 mt-2">{userVote.vote_reason}</p>
-                                                        )}
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            Voted on {formatDateTime(userVote.voted_at)}
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                {/* Expired */}
-                                                {isExpired && !userVote && (
-                                                    <div className="bg-red-50 p-3 rounded border border-red-200">
-                                                        <p className="text-sm text-red-700">
-                                                            Voting deadline has passed. You did not vote on this resolution.
-                                                        </p>
-                                                    </div>
-                                                )}
+                                        {/* Expired */}
+                                        {isExpired && !userVote && (
+                                            <div className="bg-red-50 p-3 rounded border border-red-200">
+                                                <p className="text-sm text-red-700">
+                                                    Voting deadline has passed. You did not vote on this resolution.
+                                                </p>
                                             </div>
-                                        </div>
-                                    </CardContent>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
                                 </Card>
                             );
                         })}
