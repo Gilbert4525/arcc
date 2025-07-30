@@ -35,6 +35,9 @@ interface Minutes {
     approve_votes: number;
     reject_votes: number;
     abstain_votes: number;
+    approval_threshold?: number;
+    minimum_quorum?: number;
+    total_eligible_voters?: number;
     approval_percentage?: number;
     creator?: {
         full_name: string;
@@ -54,7 +57,7 @@ export function MinutesVoting() {
     const [userVotes, setUserVotes] = useState<Record<string, UserVote>>({});
     const [loading, setLoading] = useState(true);
     const [votingLoading, setVotingLoading] = useState<string | null>(null);
-    
+
     // Detail view state
     const [selectedMinutes, setSelectedMinutes] = useState<Minutes | null>(null);
     const [showDetailView, setShowDetailView] = useState(false);
@@ -67,77 +70,43 @@ export function MinutesVoting() {
     }, []);
 
     const fetchMinutes = async () => {
-        const fetchId = Math.random().toString(36).substring(7);
-        console.log(`[${fetchId}] Starting fetchMinutes...`);
-        
         try {
             setLoading(true);
-            
-            console.log(`[${fetchId}] Fetching minutes from API...`);
-            const response = await fetch('/api/minutes?includeCreator=true');
-            
-            console.log(`[${fetchId}] Minutes API response status:`, response.status);
-            
+
+            // Single API call to get minutes with user votes included
+            const response = await fetch('/api/minutes?includeCreator=true&includeUserVotes=true');
+
             if (!response.ok) {
                 throw new Error(`Failed to fetch minutes: ${response.status}`);
             }
 
             const data = await response.json();
             const allMinutes = data.minutes || [];
-            console.log(`[${fetchId}] Fetched ${allMinutes.length} total minutes:`, allMinutes.map((m: Minutes) => ({ id: m.id, title: m.title, status: m.status })));
 
             // Filter minutes that are relevant for board members
             // Show all minutes except drafts (board members shouldn't see drafts)
             const relevantMinutes = allMinutes.filter((m: Minutes) =>
                 m.status !== 'draft'
             );
-            console.log(`[${fetchId}] Filtered to ${relevantMinutes.length} relevant minutes:`, relevantMinutes.map((m: Minutes) => ({ id: m.id, title: m.title, status: m.status })));
 
             setMinutes(relevantMinutes);
 
-            // Fetch user votes for voting minutes
-            const votingMinutes = relevantMinutes.filter((m: Minutes) => m.status === 'voting');
-            console.log(`[${fetchId}] Found ${votingMinutes.length} voting minutes:`, votingMinutes.map((m: Minutes) => ({ id: m.id, title: m.title })));
-            
+            // Extract user votes from the response
             const votes: Record<string, UserVote> = {};
             const voteComments: Record<string, string> = {};
 
-            for (const minutesItem of votingMinutes) {
-                try {
-                    console.log(`[${fetchId}] Fetching vote for minutes ${minutesItem.id}...`);
-                    const voteResponse = await fetch(`/api/minutes/${minutesItem.id}/vote`);
-                    
-                    console.log(`[${fetchId}] Vote response for ${minutesItem.id}:`, voteResponse.status);
-                    
-                    if (voteResponse.ok) {
-                        const voteData = await voteResponse.json();
-                        console.log(`[${fetchId}] Vote data for ${minutesItem.id}:`, voteData);
-                        
-                        if (voteData.success && voteData.vote) {
-                            votes[minutesItem.id] = voteData.vote;
-                            voteComments[minutesItem.id] = voteData.vote.comments || '';
-                            console.log(`[${fetchId}] Found existing vote for ${minutesItem.id}:`, voteData.vote.vote);
-                        } else {
-                            console.log(`[${fetchId}] No vote found for ${minutesItem.id}`);
-                        }
-                    } else {
-                        console.warn(`[${fetchId}] Failed to fetch vote for ${minutesItem.id}:`, voteResponse.status);
-                    }
-                } catch (error) {
-                    console.error(`[${fetchId}] Error fetching vote for minutes ${minutesItem.id}:`, error);
+            relevantMinutes.forEach((minutesItem: any) => {
+                if (minutesItem.userVote) {
+                    votes[minutesItem.id] = minutesItem.userVote;
+                    voteComments[minutesItem.id] = minutesItem.userVote.comments || '';
                 }
-            }
+            });
 
-            console.log(`[${fetchId}] Setting user votes:`, votes);
             setUserVotes(votes);
-            
-            console.log(`[${fetchId}] Setting vote comments:`, voteComments);
             setVoteComments(prev => ({ ...prev, ...voteComments }));
-            
-            console.log(`[${fetchId}] fetchMinutes completed successfully`);
-            
+
         } catch (error) {
-            console.error(`[${fetchId}] Error fetching minutes:`, error);
+            console.error('Error fetching minutes:', error);
             toast({
                 title: 'Error',
                 description: error instanceof Error ? error.message : 'Failed to load minutes',
@@ -155,7 +124,7 @@ export function MinutesVoting() {
 
     const handleDetailViewVote = async (vote: 'approve' | 'reject' | 'abstain', comment?: string) => {
         if (!selectedMinutes) return;
-        
+
         try {
             const response = await fetch(`/api/minutes/${selectedMinutes.id}/vote`, {
                 method: 'POST',
@@ -196,137 +165,61 @@ export function MinutesVoting() {
     };
 
     const handleVote = async (minutesId: string, vote: 'approve' | 'reject' | 'abstain') => {
-        const voteId = Math.random().toString(36).substring(7);
-        console.log(`[${voteId}] Starting vote submission:`, { minutesId, vote, hasComment: !!voteComments[minutesId] });
-        
         try {
             setVotingLoading(minutesId);
-
-            const requestBody = {
-                vote,
-                comments: voteComments[minutesId] || undefined,
-            };
-
-            console.log(`[${voteId}] Sending vote request:`, requestBody);
 
             const response = await fetch(`/api/minutes/${minutesId}/vote`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
+                body: JSON.stringify({
+                    vote,
+                    comments: voteComments[minutesId] || undefined,
+                }),
             });
 
-            console.log(`[${voteId}] Response status:`, response.status);
-
-            let data;
-            try {
-                data = await response.json();
-                console.log(`[${voteId}] Response data:`, data);
-            } catch (parseError) {
-                console.error(`[${voteId}] Failed to parse response JSON:`, parseError);
-                throw new Error('Invalid response from server');
-            }
-
             if (!response.ok) {
-                const errorMessage = data?.error || `HTTP ${response.status}`;
-                const errorCode = data?.code || 'UNKNOWN_ERROR';
-                console.error(`[${voteId}] Vote submission failed:`, { status: response.status, error: errorMessage, code: errorCode });
-                
-                throw new Error(`${errorMessage} (${errorCode})`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Failed to submit vote (${response.status})`);
             }
 
-            if (!data.success) {
-                console.error(`[${voteId}] Vote submission returned success=false:`, data);
+            const data = await response.json();
+
+            if (!data.success || !data.vote) {
                 throw new Error(data.error || 'Vote submission failed');
             }
 
-            if (!data.vote) {
-                console.error(`[${voteId}] No vote data in response:`, data);
-                throw new Error('No vote data returned from server');
-            }
-
-            console.log(`[${voteId}] Vote submitted successfully:`, data.vote);
-
             // Update user vote immediately
-            setUserVotes(prev => {
-                const updated = {
-                    ...prev,
-                    [minutesId]: data.vote
-                };
-                console.log(`[${voteId}] Updated user votes:`, updated);
-                return updated;
-            });
+            setUserVotes(prev => ({
+                ...prev,
+                [minutesId]: data.vote
+            }));
 
-            // Update minutes with new statistics if available
+            // Update minutes with new statistics
             if (data.minutes) {
-                setMinutes(prev => {
-                    const updated = prev.map(m =>
-                        m.id === minutesId ? { ...m, ...data.minutes } : m
-                    );
-                    console.log(`[${voteId}] Updated minutes:`, updated.find(m => m.id === minutesId));
-                    return updated;
-                });
-            } else {
-                console.warn(`[${voteId}] No updated minutes data in response`);
+                setMinutes(prev => prev.map(m =>
+                    m.id === minutesId ? { ...m, ...data.minutes } : m
+                ));
             }
 
-            // Verify the vote was saved by fetching it again
-            console.log(`[${voteId}] Verifying vote was saved...`);
-            try {
-                const verifyResponse = await fetch(`/api/minutes/${minutesId}/vote`);
-                if (verifyResponse.ok) {
-                    const verifyData = await verifyResponse.json();
-                    console.log(`[${voteId}] Vote verification:`, verifyData);
-                    
-                    if (verifyData.success && verifyData.vote) {
-                        // Update with verified vote data
-                        setUserVotes(prev => ({
-                            ...prev,
-                            [minutesId]: verifyData.vote
-                        }));
-                    } else {
-                        console.warn(`[${voteId}] Vote verification failed - vote not found in database`);
-                    }
-                } else {
-                    console.warn(`[${voteId}] Vote verification request failed:`, verifyResponse.status);
-                }
-            } catch (verifyError) {
-                console.warn(`[${voteId}] Vote verification error:`, verifyError);
-            }
-
-            // Refresh the minutes list to ensure we have the latest data
-            console.log(`[${voteId}] Scheduling data refresh...`);
-            setTimeout(() => {
-                console.log(`[${voteId}] Refreshing minutes data...`);
-                fetchMinutes();
-            }, 1000);
+            // Clear the comment for this minutes
+            setVoteComments(prev => ({
+                ...prev,
+                [minutesId]: ''
+            }));
 
             toast({
                 title: 'Vote Submitted',
-                description: `Your ${vote} vote has been recorded`,
+                description: `Your ${vote} vote has been recorded successfully`,
             });
-
-            console.log(`[${voteId}] Vote submission completed successfully`);
 
         } catch (error) {
-            console.error(`[${voteId}] Error casting vote:`, error);
+            console.error('Error casting vote:', error);
             
-            let errorMessage = 'Failed to submit vote';
-            if (error instanceof Error) {
-                errorMessage = error.message;
-            }
-
             toast({
                 title: 'Error',
-                description: errorMessage,
+                description: error instanceof Error ? error.message : 'Failed to submit vote',
                 variant: 'destructive',
             });
-
-            // Try to refresh data even on error to get current state
-            setTimeout(() => {
-                console.log(`[${voteId}] Refreshing data after error...`);
-                fetchMinutes();
-            }, 2000);
-
         } finally {
             setVotingLoading(null);
         }
@@ -353,10 +246,10 @@ export function MinutesVoting() {
             cancelled: { label: 'Cancelled', variant: 'secondary' as const, icon: XCircle },
         };
 
-        const config = statusConfig[status] || { 
-            label: status || 'Unknown', 
-            variant: 'secondary' as const, 
-            icon: AlertCircle 
+        const config = statusConfig[status] || {
+            label: status || 'Unknown',
+            variant: 'secondary' as const,
+            icon: AlertCircle
         };
         const Icon = config.icon;
 
@@ -391,6 +284,39 @@ export function MinutesVoting() {
         return new Date(deadline) < new Date();
     };
 
+    const getTimeUntilDeadline = (deadline?: string) => {
+        if (!deadline) return null;
+        
+        const now = new Date();
+        const deadlineDate = new Date(deadline);
+        const timeDiff = deadlineDate.getTime() - now.getTime();
+        
+        if (timeDiff <= 0) return null;
+        
+        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+        const days = Math.floor(hours / 24);
+        
+        if (days > 0) {
+            return `${days} day${days !== 1 ? 's' : ''} remaining`;
+        } else if (hours > 0) {
+            return `${hours} hour${hours !== 1 ? 's' : ''} remaining`;
+        } else {
+            const minutes = Math.floor(timeDiff / (1000 * 60));
+            return `${minutes} minute${minutes !== 1 ? 's' : ''} remaining`;
+        }
+    };
+
+    const isDeadlineUrgent = (deadline?: string) => {
+        if (!deadline) return false;
+        
+        const now = new Date();
+        const deadlineDate = new Date(deadline);
+        const timeDiff = deadlineDate.getTime() - now.getTime();
+        
+        // Consider urgent if less than 24 hours remaining
+        return timeDiff > 0 && timeDiff < (24 * 60 * 60 * 1000);
+    };
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString();
     };
@@ -399,8 +325,39 @@ export function MinutesVoting() {
         return new Date(dateString).toLocaleString();
     };
 
-    const votingMinutes = minutes.filter(m => m.status === 'voting');
-    const completedMinutes = minutes.filter(m => ['passed', 'failed'].includes(m.status));
+    // Show minutes in voting section if:
+    // 1. Status is 'voting' (actively open for voting)
+    // 2. OR status is 'passed'/'failed' but voting deadline hasn't passed yet (recently completed)
+    const votingMinutes = minutes.filter(m => {
+        if (m.status === 'voting') return true;
+        
+        // If recently passed/failed but deadline hasn't passed, keep showing in voting section
+        if (['passed', 'failed'].includes(m.status) && m.voting_deadline) {
+            const deadline = new Date(m.voting_deadline);
+            const now = new Date();
+            // Show for 24 hours after completion or until deadline passes, whichever is longer
+            const showUntil = new Date(Math.max(deadline.getTime(), now.getTime() - 24 * 60 * 60 * 1000));
+            return now <= showUntil;
+        }
+        
+        return false;
+    });
+    
+    // Only show in completed section if voting period is truly over
+    const completedMinutes = minutes.filter(m => {
+        if (!['passed', 'failed'].includes(m.status)) return false;
+        
+        // If has voting deadline and it hasn't passed, don't show in completed yet
+        if (m.voting_deadline) {
+            const deadline = new Date(m.voting_deadline);
+            const now = new Date();
+            // Only show in completed after 24 hours past deadline
+            return now > new Date(deadline.getTime() + 24 * 60 * 60 * 1000);
+        }
+        
+        // If no deadline, show in completed
+        return true;
+    });
 
     return (
         <div className="space-y-6">
@@ -413,7 +370,7 @@ export function MinutesVoting() {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-gray-900">
-                        Minutes Requiring Your Vote ({votingMinutes.length})
+                        Active & Recent Voting ({votingMinutes.length})
                     </h2>
                 </div>
 
@@ -421,9 +378,9 @@ export function MinutesVoting() {
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center py-12">
                             <Users className="h-12 w-12 text-gray-400 mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No minutes awaiting votes</h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No active voting</h3>
                             <p className="text-gray-600 text-center">
-                                There are currently no minutes open for voting
+                                There are currently no minutes open for voting or recently completed
                             </p>
                         </CardContent>
                     </Card>
@@ -446,9 +403,9 @@ export function MinutesVoting() {
                                                         Meeting: {formatDate(minutesItem.meeting_date)}
                                                     </span>
                                                     {minutesItem.voting_deadline && (
-                                                        <span className="flex items-center gap-1">
+                                                        <span className={`flex items-center gap-1 ${isDeadlineUrgent(minutesItem.voting_deadline) ? 'text-red-600 font-medium' : ''}`}>
                                                             <Clock className="h-4 w-4" />
-                                                            Deadline: {formatDateTime(minutesItem.voting_deadline)}
+                                                            {getTimeUntilDeadline(minutesItem.voting_deadline) || 'Deadline passed'}
                                                         </span>
                                                     )}
                                                 </CardDescription>
@@ -481,12 +438,20 @@ export function MinutesVoting() {
                                             <div className="bg-blue-50 p-4 rounded-lg">
                                                 <div className="flex justify-between items-center mb-3">
                                                     <h4 className="font-medium text-blue-900">Voting Progress</h4>
-                                                    <span className="text-sm text-blue-700">
-                                                        {((minutesItem.total_votes || 0) > 0 
-                                                            ? (((minutesItem.approve_votes || 0) / (minutesItem.total_votes || 1)) * 100).toFixed(1)
-                                                            : '0.0'
-                                                        )}% approval
-                                                    </span>
+                                                    <div className="text-right">
+                                                        <div className="text-sm text-blue-700">
+                                                            {((minutesItem.total_votes || 0) > 0
+                                                                ? (((minutesItem.approve_votes || 0) / (minutesItem.total_votes || 1)) * 100).toFixed(1)
+                                                                : '0.0'
+                                                            )}% approval (need {minutesItem.approval_threshold || 75}%)
+                                                        </div>
+                                                        <div className="text-xs text-blue-600">
+                                                            {minutesItem.total_votes || 0} of {minutesItem.total_eligible_voters || 0} votes
+                                                            {minutesItem.minimum_quorum && (
+                                                                <span> • {minutesItem.minimum_quorum}% quorum required</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
 
                                                 <div className="grid grid-cols-3 gap-4 text-sm mb-4">
@@ -504,8 +469,64 @@ export function MinutesVoting() {
                                                     </div>
                                                 </div>
 
+                                                {/* Quorum Status */}
+                                                {minutesItem.minimum_quorum && minutesItem.total_eligible_voters && (
+                                                    <div className="mb-4">
+                                                        <div className="flex justify-between items-center text-xs text-blue-700 mb-1">
+                                                            <span>Quorum Progress</span>
+                                                            <span>
+                                                                {Math.round(((minutesItem.total_votes || 0) / minutesItem.total_eligible_voters) * 100)}% 
+                                                                (need {minutesItem.minimum_quorum}%)
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-full bg-blue-200 rounded-full h-2">
+                                                            <div 
+                                                                className={`h-2 rounded-full transition-all duration-300 ${
+                                                                    ((minutesItem.total_votes || 0) / minutesItem.total_eligible_voters) * 100 >= minutesItem.minimum_quorum
+                                                                        ? 'bg-green-500' 
+                                                                        : 'bg-blue-500'
+                                                                }`}
+                                                                style={{ 
+                                                                    width: `${Math.min(100, ((minutesItem.total_votes || 0) / minutesItem.total_eligible_voters) * 100)}%` 
+                                                                }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Voting Completed Notice */}
+                                                {['passed', 'failed'].includes(minutesItem.status) && (
+                                                    <div className={`p-3 rounded border ${
+                                                        minutesItem.status === 'passed' 
+                                                            ? 'bg-green-50 border-green-200' 
+                                                            : 'bg-red-50 border-red-200'
+                                                    }`}>
+                                                        <div className="flex items-center gap-2">
+                                                            {minutesItem.status === 'passed' ? (
+                                                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                                            ) : (
+                                                                <XCircle className="h-4 w-4 text-red-600" />
+                                                            )}
+                                                            <span className={`text-sm font-medium ${
+                                                                minutesItem.status === 'passed' 
+                                                                    ? 'text-green-800' 
+                                                                    : 'text-red-800'
+                                                            }`}>
+                                                                Voting Complete - Minutes {minutesItem.status === 'passed' ? 'Approved' : 'Rejected'}
+                                                            </span>
+                                                        </div>
+                                                        <p className={`text-xs mt-1 ${
+                                                            minutesItem.status === 'passed' 
+                                                                ? 'text-green-700' 
+                                                                : 'text-red-700'
+                                                        }`}>
+                                                            Final result based on voting threshold and participation
+                                                        </p>
+                                                    </div>
+                                                )}
+
                                                 {/* Voting Actions */}
-                                                {canVote && !userVote && (
+                                                {canVote && !userVote && minutesItem.status === 'voting' && (
                                                     <div className="space-y-3">
                                                         <div>
                                                             <Label htmlFor={`comment-${minutesItem.id}`} className="text-sm font-medium">
@@ -663,7 +684,7 @@ export function MinutesVoting() {
                                                 </div>
                                                 <div className="text-center">
                                                     <div className="font-medium">
-                                                        {((minutesItem.total_votes || 0) > 0 
+                                                        {((minutesItem.total_votes || 0) > 0
                                                             ? (((minutesItem.approve_votes || 0) / (minutesItem.total_votes || 1)) * 100).toFixed(1)
                                                             : '0.0'
                                                         )}%

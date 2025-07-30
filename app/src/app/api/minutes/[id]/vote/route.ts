@@ -178,6 +178,37 @@ export async function POST(
 
     console.log(`[${requestId}] Vote successfully submitted:`, voteResult);
 
+    // Manually update vote counts to ensure they're accurate
+    try {
+      const { data: voteCountsData, error: voteCountsError } = await supabase
+        .from('minutes_votes')
+        .select('vote')
+        .eq('minutes_id', resolvedParams.id);
+
+      if (!voteCountsError && voteCountsData) {
+        const totalVotes = voteCountsData.length;
+        const approveVotes = voteCountsData.filter(v => v.vote === 'approve').length;
+        const rejectVotes = voteCountsData.filter(v => v.vote === 'reject').length;
+        const abstainVotes = voteCountsData.filter(v => v.vote === 'abstain').length;
+
+        // Update the minutes table with correct counts
+        await supabase
+          .from('minutes')
+          .update({
+            total_votes: totalVotes,
+            approve_votes: approveVotes,
+            reject_votes: rejectVotes,
+            abstain_votes: abstainVotes,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', resolvedParams.id);
+
+        console.log(`[${requestId}] Updated vote counts: total=${totalVotes}, approve=${approveVotes}, reject=${rejectVotes}, abstain=${abstainVotes}`);
+      }
+    } catch (countError) {
+      console.error(`[${requestId}] Failed to update vote counts:`, countError);
+    }
+
     // Get updated minutes with voting results
     let updatedMinutes;
     try {

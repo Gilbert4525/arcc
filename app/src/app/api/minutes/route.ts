@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const includeCommentCounts = searchParams.get('includeCommentCounts') === 'true';
     const includeCreator = searchParams.get('includeCreator') === 'true';
+    const includeUserVotes = searchParams.get('includeUserVotes') === 'true';
 
     if (stats === 'true') {
       const statistics = await minutesService.getMinutesStats();
@@ -56,6 +57,8 @@ export async function GET(request: NextRequest) {
       // Check if admin wants comment counts
       if (includeCommentCounts && profile.role === 'admin') {
         result = await minutesService.getMinutesWithCommentCounts(page, limit);
+      } else if (includeCreator && includeUserVotes) {
+        result = await minutesService.getMinutesWithCreatorAndUserVotes(page, limit);
       } else if (includeCreator) {
         result = await minutesService.getMinutesWithCreator(page, limit);
       } else {

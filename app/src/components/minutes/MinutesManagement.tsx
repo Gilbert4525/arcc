@@ -27,6 +27,9 @@ interface Minutes {
   approve_votes: number;
   reject_votes: number;
   abstain_votes: number;
+  approval_threshold?: number;
+  minimum_quorum?: number;
+  total_eligible_voters?: number;
   approval_percentage?: number; // Make this optional since it's calculated
   comment_count?: number; // Add comment count for admin view
   has_comments?: boolean; // Flag to indicate if there are any comments
@@ -111,12 +114,16 @@ export function MinutesManagement() {
     }
   };
 
-  const handlePublishMinutes = async (minutesId: string, votingDeadline: string) => {
+  const handlePublishMinutes = async (minutesId: string, votingDeadline: string, minimumQuorum?: number, approvalThreshold?: number) => {
     try {
       const response = await fetch(`/api/minutes/${minutesId}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voting_deadline: votingDeadline }),
+        body: JSON.stringify({ 
+          voting_deadline: votingDeadline,
+          minimum_quorum: minimumQuorum,
+          approval_threshold: approvalThreshold
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to publish minutes');

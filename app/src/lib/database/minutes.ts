@@ -187,6 +187,61 @@ export class MinutesService {
     }
   }
 
+  // Get minutes with creator information and user votes
+  async getMinutesWithCreatorAndUserVotes(page: number = 1, limit: number = 20): Promise<{
+    minutes: (Minutes & { creator?: { full_name: string; email: string }; userVote?: MinutesVote })[];
+    total: number;
+    hasMore: boolean;
+  }> {
+    try {
+      const offset = (page - 1) * limit;
+
+      // Get current user
+      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data, error, count } = await this.supabase
+        .from('minutes')
+        .select(`
+          *,
+          profiles!minutes_created_by_fkey(full_name, email),
+          minutes_votes!left(id, vote, comments, voted_at, created_at)
+        `, { count: 'exact' })
+        .eq('minutes_votes.user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) throw error;
+
+      // Transform data to include creator information and user vote
+      const minutesWithData = (data || []).map(minutes => {
+        const { profiles, minutes_votes, ...minutesData } = minutes as any;
+        return {
+          ...minutesData,
+          creator: profiles ? {
+            full_name: profiles.full_name,
+            email: profiles.email,
+          } : null,
+          userVote: minutes_votes && minutes_votes.length > 0 ? minutes_votes[0] : null,
+        };
+      });
+
+      const total = count || 0;
+      const hasMore = total > page * limit;
+
+      return {
+        minutes: minutesWithData,
+        total,
+        hasMore,
+      };
+    } catch (error) {
+      console.error('Error fetching minutes with creator and user votes:', error);
+      throw error;
+    }
+  }
+
   // Get minutes by status
   async getMinutesByStatus(status: Minutes['status']): Promise<Minutes[]> {
     try {

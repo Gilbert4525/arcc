@@ -28,12 +28,14 @@ export function CreateMinutesDialog({ open, onOpenChange, onSubmit }: CreateMinu
     content: '',
     key_decisions: '',
     action_items: '',
+    minimum_quorum: 50,
+    approval_threshold: 75,
   });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.meeting_date || !formData.content) {
       return;
     }
@@ -41,7 +43,7 @@ export function CreateMinutesDialog({ open, onOpenChange, onSubmit }: CreateMinu
     try {
       setLoading(true);
       await onSubmit(formData);
-      
+
       // Reset form
       setFormData({
         title: '',
@@ -49,6 +51,8 @@ export function CreateMinutesDialog({ open, onOpenChange, onSubmit }: CreateMinu
         content: '',
         key_decisions: '',
         action_items: '',
+        minimum_quorum: 50,
+        approval_threshold: 75,
       });
     } catch (error) {
       console.error('Error creating minutes:', error);
@@ -57,7 +61,11 @@ export function CreateMinutesDialog({ open, onOpenChange, onSubmit }: CreateMinu
     }
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleNumberChange = (field: string, value: number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -160,6 +168,49 @@ export function CreateMinutesDialog({ open, onOpenChange, onSubmit }: CreateMinu
             <p className="text-sm text-gray-500">
               Include tasks assigned to specific people, deadlines, and follow-up requirements.
             </p>
+          </div>
+
+          {/* Voting Configuration */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-medium text-gray-900">Voting Configuration</h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="minimum_quorum" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Minimum Quorum (%)
+                </Label>
+                <Input
+                  id="minimum_quorum"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formData.minimum_quorum}
+                  onChange={(e) => handleNumberChange('minimum_quorum', parseInt(e.target.value) || 50)}
+                />
+                <p className="text-sm text-gray-500">
+                  Minimum percentage of board members required to vote for the result to be valid.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="approval_threshold" className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  Approval Threshold (%)
+                </Label>
+                <Input
+                  id="approval_threshold"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formData.approval_threshold}
+                  onChange={(e) => handleNumberChange('approval_threshold', parseInt(e.target.value) || 75)}
+                />
+                <p className="text-sm text-gray-500">
+                  Percentage of votes required to approve the minutes.
+                </p>
+              </div>
+            </div>
           </div>
 
           <DialogFooter>

@@ -28,7 +28,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { voting_deadline } = body;
+    const { voting_deadline, minimum_quorum, approval_threshold } = body;
 
     if (!voting_deadline) {
       return NextResponse.json({ 
@@ -58,8 +58,31 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Publish minutes for voting
-    const minutes = await minutesService.publishMinutesForVoting(resolvedParams.id, voting_deadline);
+    // Update minutes with voting configuration and publish
+    const updateData: any = {
+      status: 'voting',
+      voting_deadline: voting_deadline,
+    };
+
+    if (minimum_quorum !== undefined) {
+      updateData.minimum_quorum = minimum_quorum;
+    }
+    if (approval_threshold !== undefined) {
+      updateData.approval_threshold = approval_threshold;
+    }
+
+    // Get total eligible voters count
+    const { data: boardMembers, error: boardMembersError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'board_member')
+      .eq('is_active', true);
+
+    if (!boardMembersError && boardMembers) {
+      updateData.total_eligible_voters = boardMembers.length;
+    }
+
+    const minutes = await minutesService.updateMinutes(resolvedParams.id, updateData);
     if (!minutes) {
       return NextResponse.json({ error: 'Failed to publish minutes' }, { status: 500 });
     }

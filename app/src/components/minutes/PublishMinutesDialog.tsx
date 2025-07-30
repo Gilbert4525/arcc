@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, AlertTriangle, Clock } from 'lucide-react';
+import { Calendar, Users, AlertTriangle, Clock, CheckSquare } from 'lucide-react';
 
 interface Minutes {
   id: string;
@@ -23,13 +23,15 @@ interface Minutes {
   key_decisions?: string;
   action_items?: string;
   status: string;
+  minimum_quorum?: number;
+  approval_threshold?: number;
 }
 
 interface PublishMinutesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   minutes: Minutes;
-  onPublish: (minutesId: string, votingDeadline: string) => Promise<void>;
+  onPublish: (minutesId: string, votingDeadline: string, minimumQuorum?: number, approvalThreshold?: number) => Promise<void>;
 }
 
 export function PublishMinutesDialog({ 
@@ -39,6 +41,8 @@ export function PublishMinutesDialog({
   onPublish 
 }: PublishMinutesDialogProps) {
   const [votingDeadline, setVotingDeadline] = useState('');
+  const [minimumQuorum, setMinimumQuorum] = useState(50);
+  const [approvalThreshold, setApprovalThreshold] = useState(75);
   const [loading, setLoading] = useState(false);
 
   // Set default deadline to 7 days from now
@@ -64,7 +68,7 @@ export function PublishMinutesDialog({
 
     try {
       setLoading(true);
-      await onPublish(minutes.id, votingDeadline);
+      await onPublish(minutes.id, votingDeadline, minimumQuorum, approvalThreshold);
     } catch (error) {
       console.error('Error publishing minutes:', error);
     } finally {
@@ -76,12 +80,17 @@ export function PublishMinutesDialog({
     return new Date(dateString).toLocaleDateString();
   };
 
-  // Set default deadline when dialog opens
+  // Set default values when dialog opens
   useEffect(() => {
-    if (open && !votingDeadline) {
-      setVotingDeadline(getDefaultDeadline());
+    if (open) {
+      if (!votingDeadline) {
+        setVotingDeadline(getDefaultDeadline());
+      }
+      // Set current values from minutes if available
+      setMinimumQuorum(minutes.minimum_quorum || 50);
+      setApprovalThreshold(minutes.approval_threshold || 75);
     }
-  }, [open, votingDeadline]);
+  }, [open, votingDeadline, minutes]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -158,6 +167,45 @@ export function PublishMinutesDialog({
                 Board members must submit their votes before this deadline. 
                 Recommended: Allow at least 3-7 days for voting.
               </p>
+            </div>
+
+            {/* Voting Configuration */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="minimum_quorum" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Minimum Quorum (%)
+                </Label>
+                <Input
+                  id="minimum_quorum"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={minimumQuorum}
+                  onChange={(e) => setMinimumQuorum(parseInt(e.target.value) || 50)}
+                />
+                <p className="text-sm text-gray-500">
+                  Minimum percentage of board members required to vote.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="approval_threshold" className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  Approval Threshold (%)
+                </Label>
+                <Input
+                  id="approval_threshold"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={approvalThreshold}
+                  onChange={(e) => setApprovalThreshold(parseInt(e.target.value) || 75)}
+                />
+                <p className="text-sm text-gray-500">
+                  Percentage of votes required to approve the minutes.
+                </p>
+              </div>
             </div>
 
             {/* Important Information */}
