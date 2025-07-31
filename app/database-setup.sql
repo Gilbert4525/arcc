@@ -126,7 +126,7 @@ CREATE TABLE public.minutes (
     key_decisions JSONB, -- Array of key decisions made
     action_items JSONB, -- Array of action items
     category_id UUID REFERENCES public.categories(id),
-    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'voting', 'approved', 'rejected', 'archived')),
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'voting', 'passed', 'failed', 'cancelled')),
     voting_deadline TIMESTAMPTZ,
     total_eligible_voters INTEGER DEFAULT 0,
     requires_majority BOOLEAN DEFAULT true,
@@ -485,13 +485,13 @@ BEGIN
         status = CASE 
             WHEN (approve_votes::FLOAT / NULLIF(total_votes, 0) * 100) >= approval_threshold 
                  AND total_votes >= (total_eligible_voters * minimum_quorum / 100) 
-            THEN 'approved'
+            THEN 'passed'
             WHEN voting_deadline < NOW() 
             THEN CASE 
                 WHEN (approve_votes::FLOAT / NULLIF(total_votes, 0) * 100) >= approval_threshold 
                      AND total_votes >= (total_eligible_voters * minimum_quorum / 100) 
-                THEN 'approved'
-                ELSE 'rejected'
+                THEN 'passed'
+                ELSE 'failed'
             END
             ELSE status
         END,

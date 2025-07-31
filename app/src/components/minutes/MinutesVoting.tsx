@@ -91,6 +91,17 @@ export function MinutesVoting() {
 
             setMinutes(relevantMinutes);
 
+            // Log vote counts for debugging
+            relevantMinutes.forEach((minutesItem: any) => {
+                console.log(`Minutes ${minutesItem.id} vote counts:`, {
+                    title: minutesItem.title,
+                    total_votes: minutesItem.total_votes,
+                    approve_votes: minutesItem.approve_votes,
+                    reject_votes: minutesItem.reject_votes,
+                    abstain_votes: minutesItem.abstain_votes
+                });
+            });
+
             // Extract user votes from the response
             const votes: Record<string, UserVote> = {};
             const voteComments: Record<string, string> = {};
@@ -135,9 +146,16 @@ export function MinutesVoting() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to cast vote');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to cast vote');
+            }
 
             const data = await response.json();
+
+            if (!data.success || !data.vote) {
+                throw new Error(data.error || 'Vote submission failed');
+            }
 
             // Update user vote
             setUserVotes(prev => ({
@@ -145,17 +163,19 @@ export function MinutesVoting() {
                 [selectedMinutes.id]: data.vote
             }));
 
-            // Update minutes with new statistics
-            setMinutes(prev => prev.map(m =>
-                m.id === selectedMinutes.id ? { ...m, ...data.minutes } : m
-            ));
+            // Update minutes with new statistics if provided
+            if (data.minutes) {
+                setMinutes(prev => prev.map(m =>
+                    m.id === selectedMinutes.id ? { ...m, ...data.minutes } : m
+                ));
+            }
 
             // Close detail view
             setShowDetailView(false);
             setSelectedMinutes(null);
 
-            // Refresh the minutes list to ensure we have the latest data
-            setTimeout(() => fetchMinutes(), 1000);
+            // Refresh the minutes list to ensure we have the latest vote counts
+            await fetchMinutes();
 
             return Promise.resolve();
         } catch (error) {
@@ -194,11 +214,18 @@ export function MinutesVoting() {
                 [minutesId]: data.vote
             }));
 
-            // Update minutes with new statistics
+            // Update minutes with new statistics if provided
             if (data.minutes) {
+                console.log('Updating minutes with new vote counts:', {
+                    minutesId,
+                    oldCounts: minutes.find(m => m.id === minutesId),
+                    newCounts: data.minutes
+                });
                 setMinutes(prev => prev.map(m =>
                     m.id === minutesId ? { ...m, ...data.minutes } : m
                 ));
+            } else {
+                console.warn('No updated minutes data received from vote API');
             }
 
             // Clear the comment for this minutes
@@ -211,6 +238,16 @@ export function MinutesVoting() {
                 title: 'Vote Submitted',
                 description: `Your ${vote} vote has been recorded successfully`,
             });
+
+            // Refresh the entire minutes list to ensure we have the latest vote counts
+            // This ensures vote counts are always accurate and up-to-date
+            try {
+                await fetchMinutes();
+                console.log('Minutes data refreshed successfully after vote submission');
+            } catch (refreshError) {
+                console.error('Failed to refresh minutes data after vote:', refreshError);
+                // Don't fail the vote submission, just log the error
+            }
 
         } catch (error) {
             console.error('Error casting vote:', error);
