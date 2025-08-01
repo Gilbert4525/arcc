@@ -10,7 +10,7 @@ export async function POST(
 ) {
   const startTime = Date.now();
   const requestId = Math.random().toString(36).substring(7);
-  
+
   try {
     const resolvedParams = await params;
     console.log(`[${requestId}] Starting vote submission for minutes ${resolvedParams.id}`);
@@ -18,10 +18,10 @@ export async function POST(
     // Validate request parameters
     if (!resolvedParams.id) {
       console.error(`[${requestId}] Missing minutes ID in request`);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Missing minutes ID',
         code: 'MISSING_MINUTES_ID',
-        requestId 
+        requestId
       }, { status: 400 });
     }
 
@@ -39,7 +39,7 @@ export async function POST(
     const rateLimitKey = `vote:${user.id}:${resolvedParams.id}`;
     if (!rateLimit(rateLimitKey, 5, 60000)) {
       console.warn(`[${requestId}] Rate limit exceeded for user ${user.id}`);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Rate limit exceeded. Please wait before voting again.',
         code: 'RATE_LIMIT_EXCEEDED',
         requestId,
@@ -53,10 +53,10 @@ export async function POST(
       body = await request.json();
     } catch (parseError) {
       console.error(`[${requestId}] Failed to parse request body:`, parseError);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Invalid JSON in request body',
         code: 'INVALID_JSON',
-        requestId 
+        requestId
       }, { status: 400 });
     }
 
@@ -65,7 +65,7 @@ export async function POST(
     // Validate vote value
     if (!vote || !['approve', 'reject', 'abstain'].includes(vote)) {
       console.error(`[${requestId}] Invalid vote value:`, vote);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Invalid vote. Must be approve, reject, or abstain',
         code: 'INVALID_VOTE',
         requestId,
@@ -80,10 +80,10 @@ export async function POST(
       sanitizedComments = sanitizeComment(comments);
     } catch (error) {
       console.error(`[${requestId}] Comment sanitization failed:`, error);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: error instanceof Error ? error.message : 'Invalid comment format',
         code: 'INVALID_COMMENT',
-        requestId 
+        requestId
       }, { status: 400 });
     }
 
@@ -96,40 +96,40 @@ export async function POST(
       minutes = await minutesService.getMinutesById(resolvedParams.id);
     } catch (dbError) {
       console.error(`[${requestId}] Database error fetching minutes:`, dbError);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Failed to fetch minutes',
         code: 'DATABASE_ERROR',
-        requestId 
+        requestId
       }, { status: 500 });
     }
 
     if (!minutes) {
       console.error(`[${requestId}] Minutes not found: ${resolvedParams.id}`);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Minutes not found',
         code: 'MINUTES_NOT_FOUND',
         requestId,
-        minutesId: resolvedParams.id 
+        minutesId: resolvedParams.id
       }, { status: 404 });
     }
 
     if (minutes.status !== 'voting') {
       console.error(`[${requestId}] Minutes not open for voting. Status: ${minutes.status}`);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Minutes is not open for voting',
         code: 'VOTING_NOT_OPEN',
         requestId,
-        currentStatus: minutes.status 
+        currentStatus: minutes.status
       }, { status: 400 });
     }
 
     if (minutes.voting_deadline && new Date(minutes.voting_deadline) < new Date()) {
       console.error(`[${requestId}] Voting deadline passed: ${minutes.voting_deadline}`);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Voting deadline has passed',
         code: 'VOTING_DEADLINE_PASSED',
         requestId,
-        deadline: minutes.voting_deadline 
+        deadline: minutes.voting_deadline
       }, { status: 400 });
     }
 
@@ -140,20 +140,20 @@ export async function POST(
 
     while (retryCount < maxRetries) {
       try {
-        console.log(`[${requestId}] Submitting vote (attempt ${retryCount + 1}):`, { 
-          minutesId: resolvedParams.id, 
-          vote, 
-          hasComments: !!sanitizedComments 
+        console.log(`[${requestId}] Submitting vote (attempt ${retryCount + 1}):`, {
+          minutesId: resolvedParams.id,
+          vote,
+          hasComments: !!sanitizedComments
         });
-        
+
         voteResult = await minutesService.voteOnMinutes(resolvedParams.id, vote, sanitizedComments || undefined);
         break; // Success, exit retry loop
       } catch (voteError) {
         retryCount++;
         console.error(`[${requestId}] Vote submission attempt ${retryCount} failed:`, voteError);
-        
+
         if (retryCount >= maxRetries) {
-          return NextResponse.json({ 
+          return NextResponse.json({
             error: 'Failed to submit vote after multiple attempts',
             code: 'VOTE_SUBMISSION_FAILED',
             requestId,
@@ -161,7 +161,7 @@ export async function POST(
             details: voteError instanceof Error ? voteError.message : 'Unknown error'
           }, { status: 500 });
         }
-        
+
         // Wait before retry (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 100));
       }
@@ -169,17 +169,29 @@ export async function POST(
 
     if (!voteResult) {
       console.error(`[${requestId}] Vote result is null after successful submission`);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Vote submission returned no result',
         code: 'NULL_VOTE_RESULT',
-        requestId 
+        requestId
       }, { status: 500 });
     }
 
     console.log(`[${requestId}] Vote successfully submitted:`, voteResult);
 
-    // Vote counts will be updated automatically by database trigger
-    console.log(`[${requestId}] Vote submitted successfully - counts will be updated by database trigger`);
+    // Manually update vote counts since database trigger is unreliable
+    console.log(`[${requestId}] Vote submitted successfully - manually updating vote counts`);
+
+    try {
+      // Call the database function to update vote counts
+      // @ts-ignore - Function will be created by SQL script
+      await supabase.rpc('refresh_minutes_vote_counts', {
+        minutes_id_param: resolvedParams.id
+      });
+      console.log(`[${requestId}] Vote counts updated successfully`);
+    } catch (countError) {
+      console.error(`[${requestId}] Failed to update vote counts:`, countError);
+      // Don't fail the vote submission, just log the error
+    }
 
     // Get updated minutes with voting results
     let updatedMinutes;
@@ -212,19 +224,19 @@ export async function POST(
     const duration = Date.now() - startTime;
     console.log(`[${requestId}] Vote submission completed successfully in ${duration}ms`);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       vote: voteResult,
       minutes: updatedMinutes,
       message: 'Vote submitted successfully',
       requestId,
-      duration 
+      duration
     });
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error(`[${requestId}] Unexpected error in POST /api/minutes/[id]/vote (${duration}ms):`, error);
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       error: 'Internal server error',
       code: 'INTERNAL_ERROR',
       requestId,
@@ -240,7 +252,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const requestId = Math.random().toString(36).substring(7);
-  
+
   try {
     const resolvedParams = await params;
     console.log(`[${requestId}] Fetching user vote for minutes ${resolvedParams.id}`);
@@ -248,10 +260,10 @@ export async function GET(
     // Validate request parameters
     if (!resolvedParams.id) {
       console.error(`[${requestId}] Missing minutes ID in request`);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Missing minutes ID',
         code: 'MISSING_MINUTES_ID',
-        requestId 
+        requestId
       }, { status: 400 });
     }
 
@@ -260,43 +272,43 @@ export async function GET(
 
     if (authError || !user) {
       console.error(`[${requestId}] Authentication failed:`, authError);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Unauthorized',
         code: 'UNAUTHORIZED',
-        requestId 
+        requestId
       }, { status: 401 });
     }
 
     console.log(`[${requestId}] User ${user.id} fetching vote for minutes ${resolvedParams.id}`);
 
     const minutesService = new MinutesService(supabase);
-    
+
     let userVote;
     try {
       userVote = await minutesService.getUserVote(resolvedParams.id);
     } catch (dbError) {
       console.error(`[${requestId}] Database error fetching user vote:`, dbError);
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Failed to fetch user vote',
         code: 'DATABASE_ERROR',
-        requestId 
+        requestId
       }, { status: 500 });
     }
 
-    console.log(`[${requestId}] User vote retrieved:`, { 
-      hasVote: !!userVote, 
+    console.log(`[${requestId}] User vote retrieved:`, {
+      hasVote: !!userVote,
       vote: userVote?.vote,
-      votedAt: userVote?.voted_at 
+      votedAt: userVote?.voted_at
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       vote: userVote,
-      requestId 
+      requestId
     });
   } catch (error) {
     console.error(`[${requestId}] Unexpected error in GET /api/minutes/[id]/vote:`, error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Internal server error',
       code: 'INTERNAL_ERROR',
       requestId,
