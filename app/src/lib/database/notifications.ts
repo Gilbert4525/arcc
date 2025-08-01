@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { EmailNotificationService, createEmailNotificationData } from '@/lib/email/notifications';
-import { DOCUMENT_TEMPLATES, MEETING_TEMPLATES, RESOLUTION_TEMPLATES, createNotificationFromTemplate } from '@/lib/notifications/templates';
+import { DOCUMENT_TEMPLATES } from '@/lib/notifications/templates';
 import { getSafeWebPushService, WebPushNotificationData } from '@/lib/notifications/webPushServerSafe';
 
 export interface Notification {
@@ -843,7 +843,8 @@ export class NotificationsService {
     }
   }
 
-  private async getEligibleVoters(resolutionId: string): Promise<string[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async getEligibleVoters(_resolutionId: string): Promise<string[]> {
     try {
       // For now, all board members are eligible voters
       // This can be enhanced later with specific voter eligibility rules

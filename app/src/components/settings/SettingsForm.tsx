@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { User, Bell, Shield, Database, Loader2, Check, AlertCircle } from 'lucide-react';
+import { User, Bell, Shield, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -110,7 +110,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
         const error = await response.json();
         setProfileMessage({ type: 'error', text: error.error || 'Failed to update profile' });
       }
-    } catch (error) {
+    } catch {
       setProfileMessage({ type: 'error', text: 'An error occurred while updating profile' });
     } finally {
       setProfileLoading(false);
@@ -160,7 +160,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
         const error = await response.json();
         setPasswordMessage({ type: 'error', text: error.error || 'Failed to change password' });
       }
-    } catch (error) {
+    } catch {
       setPasswordMessage({ type: 'error', text: 'An error occurred while changing password' });
     } finally {
       setPasswordLoading(false);
@@ -187,7 +187,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
         const error = await response.json();
         setNotificationMessage({ type: 'error', text: error.error || 'Failed to update preferences' });
       }
-    } catch (error) {
+    } catch {
       setNotificationMessage({ type: 'error', text: 'An error occurred while updating preferences' });
     } finally {
       setNotificationLoading(false);

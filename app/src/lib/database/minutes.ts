@@ -782,6 +782,7 @@ export class MinutesService {
         console.log(`Minutes ${index + 1} (${minutes.id}): ${votes.length} votes, ${commentCount} comments`);
         
         // Remove the votes data and add comment count
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { minutes_votes, profiles, ...minutesData } = minutes as any;
         return {
           ...minutesData,

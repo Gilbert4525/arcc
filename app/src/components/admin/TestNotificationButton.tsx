@@ -22,7 +22,7 @@ export function TestNotificationButton() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         toast({
           title: 'Success',
           description: 'Test notification created successfully!',

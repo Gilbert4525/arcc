@@ -244,7 +244,7 @@ export function DocumentManagement({
       ));
 
       toast.success(`Document ${isPublished ? 'published' : 'unpublished'} successfully`);
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };
@@ -287,7 +287,7 @@ export function DocumentManagement({
       setIsEditDialogOpen(false);
       setEditingDocument(null);
       toast.success('Document updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -319,7 +319,7 @@ export function DocumentManagement({
 
       setDocuments(documents.filter(doc => doc.id !== documentId));
       toast.success('Document deleted successfully');
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred');
     }
   };

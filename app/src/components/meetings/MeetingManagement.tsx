@@ -21,7 +21,6 @@ import { Database, Json } from '@/types/database';
 
 // Types based on exact database schema
 type Meeting = Database['public']['Tables']['meetings']['Row'];
-type MeetingInsert = Database['public']['Tables']['meetings']['Insert'];
 type Category = Database['public']['Tables']['categories']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
@@ -77,7 +76,7 @@ export default function MeetingManagement() {
 
   // Initialize services
   const supabase = createClient();
-  const { meetings: meetingsService, categories: categoriesService } = getDatabaseServices(supabase);
+  const { meetings: meetingsService } = getDatabaseServices(supabase);
 
   const loadMeetings = useCallback(async () => {
     try {

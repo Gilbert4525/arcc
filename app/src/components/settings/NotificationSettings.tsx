@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, BellOff } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { webPushService } from '@/lib/notifications/webPush';
 import { useToast } from '@/hooks/use-toast';
 
