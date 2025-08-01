@@ -183,7 +183,7 @@ export async function POST(
 
     try {
       // Call the database function to update vote counts
-      // @ts-ignore - Function will be created by SQL script
+      // @ts-expect-error - Function will be created by SQL script
       await supabase.rpc('refresh_minutes_vote_counts', {
         minutes_id_param: resolvedParams.id
       });
