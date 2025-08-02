@@ -390,12 +390,14 @@ export function DocumentManagement({
             Grid
           </Button>
 
-          <Button asChild>
-            <a href="/dashboard/documents/upload">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Document
-            </a>
-          </Button>
+          {userRole === 'admin' && (
+            <Button asChild>
+              <a href="/dashboard/documents/upload">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Document
+              </a>
+            </Button>
+          )}
         </div>
       </div>
 

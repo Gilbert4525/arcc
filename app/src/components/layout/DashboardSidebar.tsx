@@ -40,7 +40,7 @@ const navigationItems = [
     title: 'Upload Documents',
     href: '/dashboard/documents/upload',
     icon: Upload,
-    roles: ['admin', 'board_member'],
+    roles: ['admin'],
   },
   {
     title: 'Meetings',
