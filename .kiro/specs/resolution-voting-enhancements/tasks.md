@@ -9,11 +9,14 @@
   - Add voting-related columns to resolutions table
   - Create database functions for vote counting and status updates
   - Set up Row Level Security policies for resolution voting
+
+
   - _Requirements: 1.1, 2.1, 2.2, 2.5_
 
 - [ ] 2. Service Layer Implementation
 - [ ] 2.1 Extend ResolutionsService with voting methods
   - Implement voteOnResolution method with validation and error handling
+
   - Add getUserVote method to retrieve user's existing vote
   - Create getResolutionVotes method for fetching all votes on a resolution
   - Add updateVoteCounts private method for maintaining vote statistics
@@ -21,22 +24,30 @@
 
 - [ ] 2.2 Implement comment and statistics methods
   - Create getResolutionComments method mirroring minutes functionality
+
+
   - Add comment statistics calculation with vote breakdown
   - Implement concern detection for rejection votes with comments
   - Add filtering capabilities for comments (by vote type, with comments only)
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 3. API Endpoints Implementation
+
+- [-] 3. API Endpoints Implementation
+
 - [ ] 3.1 Create resolution voting API endpoints
   - Implement POST /api/resolutions/[id]/vote for casting votes
   - Add GET /api/resolutions/[id]/vote for retrieving user votes
   - Include proper authentication, validation, and error handling
+
+
   - Add rate limiting and security measures
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
 - [ ] 3.2 Create resolution comments API endpoint
   - Implement GET /api/resolutions/[id]/comments for admin comment viewing
   - Add filtering and search capabilities
+
+
   - Include vote statistics and analytics
   - Ensure admin-only access with proper authorization
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
@@ -52,12 +63,18 @@
 - [ ] 4.1 Create ResolutionVoting component
   - Build main voting interface mirroring MinutesVoting component
   - Implement voting form with approve/reject/abstain options
+
+
   - Add comment textarea for optional voting comments
   - Display voting progress and statistics
   - Handle voting deadline and expiration logic
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 5.1, 5.2, 5.3_
 
-- [ ] 4.2 Create ResolutionDetailView component
+- [x] 4.2 Create ResolutionDetailView component
+
+
+
+
   - Build detailed resolution view with voting integration
   - Display resolution content with voting interface
   - Show user's existing vote and comment if available

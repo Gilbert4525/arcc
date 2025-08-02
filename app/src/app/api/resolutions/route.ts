@@ -39,6 +39,36 @@ export async function GET(request: NextRequest) {
       result = await resolutionsService.getResolutions(page, limit);
     }
 
+    // Add voting statistics to each resolution if user is admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role === 'admin') {
+      // Add vote counts and participation rates for admin users
+      const enhancedResolutions = await Promise.all(
+        result.resolutions.map(async (resolution) => {
+          const totalVotes = (resolution.votes_for || 0) + (resolution.votes_against || 0) + (resolution.votes_abstain || 0);
+          const participationRate = resolution.total_eligible_voters 
+            ? Math.round((totalVotes / resolution.total_eligible_voters) * 100)
+            : 0;
+          
+          return {
+            ...resolution,
+            voting_stats: {
+              total_votes: totalVotes,
+              participation_rate: participationRate,
+              approval_rate: totalVotes > 0 ? Math.round(((resolution.votes_for || 0) / totalVotes) * 100) : 0
+            }
+          };
+        })
+      );
+      
+      result.resolutions = enhancedResolutions;
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error in GET /api/resolutions:', error);
@@ -99,21 +129,35 @@ export async function POST(request: NextRequest) {
       created_by: user.id,
     };
 
-    const resolution = await resolutionsService.createResolution(resolutionData);
-    if (!resolution) {
+    try {
+      const resolution = await resolutionsService.createResolution(resolutionData);
+      if (!resolution) {
+        return NextResponse.json({ error: 'Failed to create resolution' }, { status: 500 });
+      }
+
+      // Create notifications (don't let this fail the main operation)
+      try {
+        const { notifications } = getDatabaseServices(supabase);
+        await notifications.notifyResolutionCreated(resolution, user.id);
+      } catch (notificationError) {
+        console.error('Failed to create resolution notification:', notificationError);
+        // Continue - don't fail the main operation
+      }
+
+      return NextResponse.json({ resolution }, { status: 201 });
+    } catch (dbError: any) {
+      console.error('Database error creating resolution:', dbError);
+      
+      // Handle specific database errors
+      if (dbError.message && dbError.message.includes('duplicate key')) {
+        return NextResponse.json({ 
+          error: 'duplicate key value violates unique constraint "resolutions_resolution_number_key"' 
+        }, { status: 409 });
+      }
+      
       return NextResponse.json({ error: 'Failed to create resolution' }, { status: 500 });
     }
 
-    // Create notifications (don't let this fail the main operation)
-    try {
-      const { notifications } = getDatabaseServices(supabase);
-      await notifications.notifyResolutionCreated(resolution, user.id);
-    } catch (notificationError) {
-      console.error('Failed to create resolution notification:', notificationError);
-      // Continue - don't fail the main operation
-    }
-
-    return NextResponse.json({ resolution }, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/resolutions:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
