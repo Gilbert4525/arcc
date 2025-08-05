@@ -69,7 +69,7 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
 
   const handleAddUser = async (formData: FormData) => {
     setLoading(true);
-    
+
     try {
       const email = formData.get('email') as string;
       const full_name = formData.get('full_name') as string;
@@ -109,9 +109,9 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
 
   const handleEditUser = async (formData: FormData) => {
     if (!editingUser) return;
-    
+
     setLoading(true);
-    
+
     try {
       const full_name = formData.get('full_name') as string;
       const role = formData.get('role') as 'admin' | 'board_member';
@@ -161,10 +161,10 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
         throw new Error(error.error || 'Failed to update user status');
       }
 
-      setUsers(users.map(user => 
+      setUsers(users.map(user =>
         user.id === userId ? { ...user, is_active: isActive } : user
       ));
-      
+
       toast.success(`User ${isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update user status';
@@ -211,7 +211,7 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -226,7 +226,7 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
                 Create a new board member or administrator account.
               </DialogDescription>
             </DialogHeader>
-            
+
             <form action={handleAddUser} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -238,7 +238,7 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
                   <Input id="full_name" name="full_name" required />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
@@ -257,12 +257,12 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
                   <Input id="position" name="position" />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input id="phone" name="phone" type="tel" />
               </div>
-              
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancel
@@ -360,7 +360,7 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -371,7 +371,7 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete User</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete {user.full_name || user.email}? 
+                            Are you sure you want to delete {user.full_name || user.email}?
                             This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
@@ -403,17 +403,17 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
               Update user information and permissions.
             </DialogDescription>
           </DialogHeader>
-          
+
           {editingUser && (
             <form action={handleEditUser} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit_full_name">Full Name</Label>
-                  <Input 
-                    id="edit_full_name" 
-                    name="full_name" 
-                    defaultValue={editingUser.full_name || ''} 
-                    required 
+                  <Input
+                    id="edit_full_name"
+                    name="full_name"
+                    defaultValue={editingUser.full_name || ''}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -429,31 +429,31 @@ export function UserManagement({ initialUsers }: UserManagementProps) {
                   </Select>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit_position">Position</Label>
-                  <Input 
-                    id="edit_position" 
-                    name="position" 
-                    defaultValue={editingUser.position || ''} 
+                  <Input
+                    id="edit_position"
+                    name="position"
+                    defaultValue={editingUser.position || ''}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit_phone">Phone Number</Label>
-                  <Input 
-                    id="edit_phone" 
-                    name="phone" 
-                    type="tel" 
-                    defaultValue={editingUser.phone || ''} 
+                  <Input
+                    id="edit_phone"
+                    name="phone"
+                    type="tel"
+                    defaultValue={editingUser.phone || ''}
                   />
                 </div>
               </div>
-              
+
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setIsEditDialogOpen(false);
                     setEditingUser(null);

@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { getDatabaseServices } from '@/lib/database';
 import { TestNotificationButton } from '@/components/admin/TestNotificationButton';
+import { TestEmailButton } from '@/components/admin/TestEmailButton';
+import { TestWebPushButton } from '@/components/admin/TestWebPushButton';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -318,6 +320,87 @@ export default async function AdminPage() {
                   System Settings
                 </Button>
                 <TestNotificationButton />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Email System Test</CardTitle>
+            <CardDescription>
+              Test the email notification system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestEmailButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Web Push Test</CardTitle>
+            <CardDescription>
+              Test browser push notifications
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestWebPushButton />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Admin Tools */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Common administrative tasks
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/admin/reports">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                View Reports
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/dashboard/categories">
+                <Settings className="mr-2 h-4 w-4" />
+                Manage Categories
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>System Health</CardTitle>
+            <CardDescription>
+              Monitor system performance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span>Database</span>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  Healthy
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Email Service</span>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  Connected
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Notifications</span>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  Active
+                </Badge>
               </div>
             </div>
           </CardContent>

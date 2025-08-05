@@ -122,9 +122,17 @@ You can manage your notification preferences in your account settings.
         text: this.generateEmailText(data)
       };
 
-      // Here you would integrate with your email service
-      // Example with Resend (popular choice):
-      /*
+      // Check if email service is configured
+      if (!this.apiKey) {
+        console.log('📧 Email service not configured. Email would be sent:', {
+          to: emailData.to,
+          subject: emailData.subject,
+          preview: data.message.substring(0, 100) + '...'
+        });
+        return true; // Return true to not break the notification flow
+      }
+
+      // Send email using Resend
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -140,14 +148,21 @@ You can manage your notification preferences in your account settings.
         }),
       });
 
-      return response.ok;
-      */
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Email sending failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        return false;
+      }
 
-      // For now, just log the email (you'll need to set up an email service)
-      console.log('📧 Email notification would be sent:', {
+      const result = await response.json();
+      console.log('✅ Email sent successfully:', {
         to: emailData.to,
         subject: emailData.subject,
-        preview: data.message.substring(0, 100) + '...'
+        id: result.id
       });
 
       return true;
