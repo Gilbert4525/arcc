@@ -22,8 +22,21 @@ export class WebPushService {
 
     try {
       // Register service worker
+      console.log('Registering service worker...');
       this.registration = await navigator.serviceWorker.register('/sw.js');
       console.log('Service Worker registered:', this.registration);
+      
+      // Wait for the service worker to be active
+      if (this.registration.installing) {
+        console.log('Service worker installing...');
+        await new Promise((resolve) => {
+          this.registration!.installing!.addEventListener('statechange', (e) => {
+            if ((e.target as ServiceWorker).state === 'activated') {
+              resolve(void 0);
+            }
+          });
+        });
+      }
 
       // Request notification permission
       const permission = await this.requestPermission();
@@ -61,35 +74,46 @@ export class WebPushService {
   // Subscribe to push notifications
   async subscribe(): Promise<PushSubscription | null> {
     try {
+      console.log('Starting web push subscription process...');
+      
       // Wait for service worker to be ready
       const registration = await navigator.serviceWorker.ready;
       this.registration = registration;
+      console.log('Service worker ready:', registration);
 
       // Check if already subscribed
       this.subscription = await this.registration.pushManager.getSubscription();
       
-      if (!this.subscription) {
-        // Create new subscription
-        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        
-        if (!vapidPublicKey || vapidPublicKey === 'placeholder-key') {
-          console.warn('VAPID public key not configured. Web push notifications will not work.');
-          return null;
-        }
-        
-        this.subscription = await this.registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
-        });
-
-        // Send subscription to server
-        await this.sendSubscriptionToServer(this.subscription);
+      if (this.subscription) {
+        console.log('Already subscribed to push notifications');
+        return this.subscription;
       }
+      
+      // Create new subscription
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      console.log('VAPID public key available:', !!vapidPublicKey);
+      
+      if (!vapidPublicKey || vapidPublicKey === 'placeholder-key') {
+        console.warn('VAPID public key not configured. Web push notifications will not work.');
+        throw new Error('VAPID public key not configured');
+      }
+      
+      console.log('Creating new push subscription...');
+      this.subscription = await this.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
+      });
+      
+      console.log('Push subscription created:', this.subscription);
+
+      // Send subscription to server
+      await this.sendSubscriptionToServer(this.subscription);
+      console.log('Subscription sent to server successfully');
 
       return this.subscription;
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
-      return null;
+      throw error; // Re-throw to let the caller handle it
     }
   }
 
@@ -113,19 +137,28 @@ export class WebPushService {
   // Send subscription to server
   private async sendSubscriptionToServer(subscription: PushSubscription): Promise<void> {
     try {
+      console.log('Sending subscription to server...');
+      const subscriptionData = subscription.toJSON();
+      console.log('Subscription data:', subscriptionData);
+      
       const response = await fetch('/api/notifications/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          subscription: subscription.toJSON(),
+          subscription: subscriptionData,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send subscription to server');
+        const errorData = await response.text();
+        console.error('Server response error:', response.status, errorData);
+        throw new Error(`Failed to send subscription to server: ${response.status} ${errorData}`);
       }
+      
+      const result = await response.json();
+      console.log('Server response:', result);
     } catch (error) {
       console.error('Error sending subscription to server:', error);
       throw error;

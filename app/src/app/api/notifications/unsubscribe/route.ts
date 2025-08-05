@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // POST /api/notifications/unsubscribe - Unsubscribe from web push notifications
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -25,7 +25,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Failed to remove subscription' }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'Subscription removed successfully' });
+    return NextResponse.json({ message: 'Unsubscribed successfully' });
   } catch (error) {
     console.error('Error in POST /api/notifications/unsubscribe:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
