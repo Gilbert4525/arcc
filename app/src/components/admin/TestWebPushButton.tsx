@@ -16,23 +16,54 @@ export function TestWebPushButton() {
         setResult(null);
 
         try {
+            console.log('Starting web push test...');
+            console.log('Environment check:');
+            console.log('- NEXT_PUBLIC_VAPID_PUBLIC_KEY:', !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+            console.log('- NEXT_PUBLIC_SUPABASE_URL:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+            
             // Check if web push is supported
             if (!webPushService.isSupported()) {
                 setResult({ success: false, message: 'Web push notifications are not supported in this browser' });
                 return;
             }
+            console.log('Web push is supported');
+
+            // Check current environment
+            const isHTTPS = window.location.protocol === 'https:';
+            const isLocalhost = window.location.hostname === 'localhost';
+            console.log('Environment check - HTTPS:', isHTTPS, 'Localhost:', isLocalhost);
+            
+            if (!isHTTPS && !isLocalhost) {
+                setResult({ 
+                    success: false, 
+                    message: 'Web push notifications require HTTPS or localhost. Current protocol: ' + window.location.protocol 
+                });
+                return;
+            }
 
             // Initialize the service
+            console.log('Initializing web push service...');
             const initialized = await webPushService.initialize();
             if (!initialized) {
                 setResult({ success: false, message: 'Failed to initialize web push service' });
                 return;
             }
+            console.log('Web push service initialized');
 
             // Subscribe to notifications
-            const subscription = await webPushService.subscribe();
-            if (!subscription) {
-                setResult({ success: false, message: 'Failed to subscribe to web push notifications' });
+            let subscription;
+            try {
+                subscription = await webPushService.subscribe();
+                if (!subscription) {
+                    setResult({ success: false, message: 'Failed to subscribe to web push notifications' });
+                    return;
+                }
+            } catch (subscribeError: any) {
+                console.error('Subscription error:', subscribeError);
+                setResult({ 
+                    success: false, 
+                    message: `Subscription failed: ${subscribeError.message || 'Unknown error'}` 
+                });
                 return;
             }
 
@@ -122,8 +153,8 @@ export function TestWebPushButton() {
 
                 {result && (
                     <div className={`flex items-center gap-2 p-3 rounded-md ${result.success
-                            ? 'bg-green-50 text-green-700 border border-green-200'
-                            : 'bg-red-50 text-red-700 border border-red-200'
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
                         }`}>
                         {result.success ? (
                             <CheckCircle className="h-4 w-4" />

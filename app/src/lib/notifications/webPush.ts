@@ -92,6 +92,8 @@ export class WebPushService {
       // Create new subscription
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       console.log('VAPID public key available:', !!vapidPublicKey);
+      console.log('VAPID public key value:', vapidPublicKey);
+      console.log('All NEXT_PUBLIC env vars:', Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC')));
       
       if (!vapidPublicKey || vapidPublicKey === 'placeholder-key') {
         console.warn('VAPID public key not configured. Web push notifications will not work.');
