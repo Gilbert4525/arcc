@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { MinutesService, getDatabaseServices } from '@/lib/database';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { requireBoardMember, rateLimit, sanitizeComment } from '@/lib/auth/middleware';
+import { VotingCompletionDetector } from '@/lib/email/votingCompletionDetector';
 
 // POST /api/minutes/[id]/vote - Vote on minutes
 export async function POST(
@@ -219,6 +220,19 @@ export async function POST(
     } catch (notificationError) {
       console.error(`[${requestId}] Failed to create vote notification:`, notificationError);
       // Continue - don't fail the main operation
+    }
+
+    // Check if voting is now complete and trigger email if needed
+    try {
+      const completionDetector = new VotingCompletionDetector(supabase);
+      const completionStatus = await completionDetector.checkMinutesCompletion(resolvedParams.id);
+      
+      if (completionStatus.isComplete) {
+        console.log(`🎯 Minutes ${resolvedParams.id} voting completed: ${completionStatus.reason}`);
+      }
+    } catch (completionError) {
+      // Don't fail the vote if completion detection fails
+      console.error(`[${requestId}] Error checking voting completion:`, completionError);
     }
 
     const duration = Date.now() - startTime;

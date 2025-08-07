@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ResolutionsService } from '@/lib/database/resolutions';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { VotingCompletionDetector } from '@/lib/email/votingCompletionDetector';
 
 // Simple rate limiting using Map
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -104,6 +105,19 @@ export async function POST(
         ...voteResult,
         vote: voteResult.vote === 'for' ? 'approve' : voteResult.vote === 'against' ? 'reject' : 'abstain'
       };
+
+      // Check if voting is now complete and trigger email if needed
+      try {
+        const completionDetector = new VotingCompletionDetector(supabase);
+        const completionStatus = await completionDetector.checkResolutionCompletion(resolvedParams.id);
+        
+        if (completionStatus.isComplete) {
+          console.log(`🎯 Resolution ${resolvedParams.id} voting completed: ${completionStatus.reason}`);
+        }
+      } catch (completionError) {
+        // Don't fail the vote if completion detection fails
+        console.error('Error checking voting completion:', completionError);
+      }
 
       return NextResponse.json({
         success: true,

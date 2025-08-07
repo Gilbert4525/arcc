@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, BellRing, CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -10,6 +10,12 @@ export function TestWebPushButton() {
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
     const [isSubscribed, setIsSubscribed] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+
+    // Prevent hydration mismatch by only rendering client-specific content after mount
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleTestWebPush = async () => {
         setIsLoading(true);
@@ -87,6 +93,9 @@ export function TestWebPushButton() {
     };
 
     const getPermissionStatus = () => {
+        if (!isClient) {
+            return { text: 'Loading...', color: 'text-gray-600' };
+        }
         const status = webPushService.getPermissionStatus();
         switch (status) {
             case 'granted':
@@ -99,6 +108,7 @@ export function TestWebPushButton() {
     };
 
     const permission = getPermissionStatus();
+    const isSupported = isClient ? webPushService.isSupported() : false;
 
     return (
         <Card className="w-full max-w-md">
@@ -115,8 +125,8 @@ export function TestWebPushButton() {
                 <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                         <span>Browser Support:</span>
-                        <span className={webPushService.isSupported() ? 'text-green-600' : 'text-red-600'}>
-                            {webPushService.isSupported() ? 'Supported' : 'Not Supported'}
+                        <span className={isSupported ? 'text-green-600' : 'text-red-600'}>
+                            {!isClient ? 'Loading...' : (isSupported ? 'Supported' : 'Not Supported')}
                         </span>
                     </div>
 
@@ -135,7 +145,7 @@ export function TestWebPushButton() {
 
                 <Button
                     onClick={handleTestWebPush}
-                    disabled={isLoading || !webPushService.isSupported()}
+                    disabled={isLoading || !isClient || !isSupported}
                     className="w-full"
                 >
                     {isLoading ? (

@@ -18,6 +18,10 @@ import { getDatabaseServices } from '@/lib/database';
 import { TestNotificationButton } from '@/components/admin/TestNotificationButton';
 import { TestEmailButton } from '@/components/admin/TestEmailButton';
 import { TestWebPushButton } from '@/components/admin/TestWebPushButton';
+import { TestVotingSummaryButton } from '@/components/admin/TestVotingSummaryButton';
+import { TestVotingStatisticsButton } from '@/components/admin/TestVotingStatisticsButton';
+import { TestEmailTemplateButton } from '@/components/admin/TestEmailTemplateButton';
+import { TestVotingCompletionButton } from '@/components/admin/TestVotingCompletionButton';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -346,6 +350,80 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent>
             <TestWebPushButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Voting Summary Email Test</CardTitle>
+            <CardDescription>
+              Test voting summary email generation and delivery
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestVotingSummaryButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Enhanced Voting Statistics Test</CardTitle>
+            <CardDescription>
+              Test the enhanced voting statistics calculation engine
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestVotingStatisticsButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Enhanced Email Template Test</CardTitle>
+            <CardDescription>
+              Test the comprehensive voting summary email templates
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestEmailTemplateButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Voting Completion Detection Test</CardTitle>
+            <CardDescription>
+              Test the automatic voting completion detection and email triggering system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestVotingCompletionButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Vote className="mr-2 h-5 w-5" />
+              Voting Summary Management
+            </CardTitle>
+            <CardDescription>
+              Manage voting summary emails, templates, and system settings
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/admin/voting-summary">
+                <Settings className="mr-2 h-4 w-4" />
+                Manage Email System
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/admin/voting-summary">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                View Analytics
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
