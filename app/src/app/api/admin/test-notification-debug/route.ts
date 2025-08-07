@@ -4,7 +4,7 @@ import { getDatabaseServices } from '@/lib/database';
 
 /**
  * POST /api/admin/test-notification-debug
- * Debug endpoint to check notification system
+ * Comprehensive debug test for notification system
  */
 export async function POST(request: NextRequest) {
   try {
@@ -28,137 +28,110 @@ export async function POST(request: NextRequest) {
 
     const { notifications } = getDatabaseServices(supabase);
 
-    // Debug information
-    const debugInfo: any = {
-      timestamp: new Date().toISOString(),
-      checks: {}
-    };
-
-    // 1. Check all users and their profiles
-    const { data: allUsers, error: usersError } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, role');
-
-    debugInfo.checks.users = {
-      error: usersError?.message,
-      count: allUsers?.length || 0,
-      users: allUsers?.map(u => ({ id: u.id, email: u.email, role: u.role }))
-    };
-
-    // 2. Check notification preferences for all users
-    const { data: preferences, error: prefsError } = await supabase
-      .from('notification_preferences')
-      .select('user_id, email_notifications, resolution_alerts');
-
-    debugInfo.checks.preferences = {
-      error: prefsError?.message,
-      count: preferences?.length || 0,
-      preferences: preferences
-    };
-
-    // 3. Check recent notifications
-    const { data: recentNotifications, error: notifError } = await supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    debugInfo.checks.recentNotifications = {
-      error: notifError?.message,
-      count: recentNotifications?.length || 0,
-      notifications: recentNotifications
-    };
-
-    // 4. Check environment variables
-    debugInfo.checks.environment = {
+    // Step 1: Check environment variables
+    const environment = {
       emailApiKey: !!process.env.EMAIL_API_KEY,
-      fromEmail: process.env.FROM_EMAIL,
-      vapidConfigured: !!process.env.VAPID_PRIVATE_KEY
+      fromEmail: process.env.FROM_EMAIL || '',
+      configured: !!process.env.EMAIL_API_KEY && !!process.env.FROM_EMAIL
     };
 
-    // 5. Test creating default preferences for users without them
-    if (allUsers) {
-      const usersWithoutPrefs = allUsers.filter(user => 
-        !preferences?.some(pref => pref.user_id === user.id)
-      );
+    // Step 2: Check database accessibility
+    let database = {
+      profilesAccessible: false,
+      notificationsAccessible: false,
+      userCount: 0
+    };
 
-      debugInfo.checks.usersWithoutPreferences = {
-        count: usersWithoutPrefs.length,
-        users: usersWithoutPrefs.map(u => ({ id: u.id, email: u.email }))
-      };
-
-      // Create default preferences for users without them
-      if (usersWithoutPrefs.length > 0) {
-        const defaultPrefs = usersWithoutPrefs.map(user => ({
-          user_id: user.id,
-          email_notifications: true,
-          meeting_reminders: true,
-          resolution_alerts: true,
-          document_updates: true,
-          system_alerts: true,
-          email_frequency: 'immediate'
-        }));
-
-        const { error: createPrefsError } = await supabase
-          .from('notification_preferences')
-          .insert(defaultPrefs);
-
-        debugInfo.checks.createdDefaultPreferences = {
-          error: createPrefsError?.message,
-          created: !createPrefsError
-        };
-      }
-    }
-
-    // 6. Test sending a notification
     try {
-      const testNotification = {
-        title: 'Test Notification Debug',
-        message: 'This is a test notification to debug the email system',
-        type: 'system' as const,
-        priority: 'normal' as const,
-        action_url: '/dashboard',
-        action_text: 'View Dashboard'
-      };
-
-      const boardMembers = await supabase
+      // Test profiles table access
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('role', 'board_member');
+        .limit(10);
 
-      if (boardMembers.data && boardMembers.data.length > 0) {
-        const memberIds = boardMembers.data.map(m => m.id);
-        await notifications.createBulkNotifications(memberIds, testNotification);
+      database.profilesAccessible = !profilesError;
+      database.userCount = profiles?.length || 0;
+
+      // Test notifications table access
+      const { error: notificationsError } = await supabase
+        .from('notifications')
+        .select('id')
+        .limit(1);
+
+      database.notificationsAccessible = !notificationsError;
+    } catch (error) {
+      console.error('Database access test failed:', error);
+    }
+
+    // Step 3: Test email sending
+    let testEmail = {
+      success: false,
+      message: 'Not tested',
+      recipientCount: 0
+    };
+
+    try {
+      // Get board members for test
+      const { data: boardMembers } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .eq('role', 'board_member')
+        .limit(3); // Limit to 3 for debug test
+
+      if (boardMembers && boardMembers.length > 0) {
+        const memberIds = boardMembers.map(m => m.id);
         
-        debugInfo.checks.testNotificationSent = {
+        await notifications.createBulkNotifications(memberIds, {
+          title: '🔧 Debug Test Email',
+          message: 'This is a debug test email to verify the notification system is working properly.',
+          type: 'system',
+          priority: 'normal',
+          action_url: '/dashboard',
+          action_text: 'View Dashboard'
+        });
+
+        testEmail = {
           success: true,
+          message: `Debug test email sent successfully`,
           recipientCount: memberIds.length
         };
       } else {
-        debugInfo.checks.testNotificationSent = {
+        testEmail = {
           success: false,
-          reason: 'No board members found'
+          message: 'No board members found for testing',
+          recipientCount: 0
         };
       }
-    } catch (testError: any) {
-      debugInfo.checks.testNotificationSent = {
+    } catch (error: any) {
+      testEmail = {
         success: false,
-        error: testError.message
+        message: `Email test failed: ${error.message}`,
+        recipientCount: 0
       };
     }
 
+    // Determine overall success
+    const overallSuccess = environment.configured && 
+                          database.profilesAccessible && 
+                          database.notificationsAccessible && 
+                          testEmail.success;
+
     return NextResponse.json({
-      success: true,
-      message: 'Notification system debug completed',
-      debug: debugInfo
+      success: overallSuccess,
+      message: overallSuccess 
+        ? 'All debug tests passed successfully!' 
+        : 'Some debug tests failed - check details below',
+      environment,
+      database,
+      testEmail
     });
 
   } catch (error) {
-    console.error('Error in notification debug:', error);
+    console.error('Debug test error:', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Debug failed',
+        error: 'Debug test failed',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
