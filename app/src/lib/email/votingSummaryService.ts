@@ -12,7 +12,8 @@ import {
 } from './votingStatisticsEngine';
 import { VotingSummaryEmailTemplates } from './votingSummaryTemplates';
 import { RecipientManager, type EmailRecipient } from './recipientManager';
-import { BulkEmailDeliveryService, type BulkEmailResult, type EmailTemplate } from './bulkEmailDelivery';
+import { BulkEmailDeliveryService, type EmailTemplate } from './bulkEmailDelivery';
+import { type BulkEmailResult } from './recipientManager';
 
 // Type definitions for voting summary data
 export interface VotingSummaryData {

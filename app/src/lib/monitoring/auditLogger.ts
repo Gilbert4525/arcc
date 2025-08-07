@@ -258,7 +258,7 @@ export class AuditLogger {
       timestamp: new Date().toISOString(),
       event_type: 'system_error',
       user_id: context.user_id,
-      resource_type: context.resource_type || 'system',
+      resource_type: (context.resource_type as 'resolution' | 'minutes' | 'email' | 'system' | 'user') || 'system',
       resource_id: context.resource_id,
       action: 'system_error',
       details: {

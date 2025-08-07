@@ -213,7 +213,11 @@ export class RecipientManager {
       }
 
       // Merge with new preferences
-      const currentPrefs = currentProfile?.notification_preferences || {};
+      const currentPrefs = (currentProfile?.notification_preferences && 
+                           typeof currentProfile.notification_preferences === 'object' && 
+                           currentProfile.notification_preferences !== null) 
+                           ? currentProfile.notification_preferences as Record<string, any>
+                           : {};
       const updatedPrefs = { ...currentPrefs, ...preferences };
 
       // Update in database

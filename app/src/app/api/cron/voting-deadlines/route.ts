@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VotingDeadlineScheduler } from '@/lib/services/votingDeadlineScheduler';
 
 /**
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     const scheduler = new VotingDeadlineScheduler(supabase);
 
     // Execute deadline check
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔧 Manual cron job trigger');
     
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check if user is admin (for manual triggers)
     const { data: { user }, error: authError } = await supabase.auth.getUser();

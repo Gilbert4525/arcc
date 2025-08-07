@@ -144,10 +144,34 @@ export default function RecipientManagement() {
         if (recipient.id === recipientId) {
           if (field.includes('.')) {
             const [parent, child] = field.split('.');
+            const parentValue = recipient[parent as keyof EmailRecipient];
+            
+            // Type-safe handling for nested object updates
+            if (parent === 'preferences' && recipient.preferences && typeof recipient.preferences === 'object') {
+              return {
+                ...recipient,
+                preferences: {
+                  ...recipient.preferences,
+                  [child]: value
+                }
+              };
+            }
+            
+            // Fallback for other nested objects
+            if (parentValue && typeof parentValue === 'object' && parentValue !== null) {
+              return {
+                ...recipient,
+                [parent]: {
+                  ...(parentValue as Record<string, any>),
+                  [child]: value
+                }
+              };
+            }
+            
+            // If parent doesn't exist or isn't an object, create it
             return {
               ...recipient,
               [parent]: {
-                ...recipient[parent as keyof EmailRecipient],
                 [child]: value
               }
             };

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VotingDeadlineScheduler } from '@/lib/services/votingDeadlineScheduler';
 
 // Global scheduler instance to maintain state across requests
@@ -11,7 +11,7 @@ let globalScheduler: VotingDeadlineScheduler | null = null;
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Initialize scheduler if not exists
     if (!globalScheduler) {
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser();

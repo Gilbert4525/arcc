@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VotingSummaryEmailService } from '@/lib/email/votingSummaryService';
 
 /**
@@ -8,7 +8,7 @@ import { VotingSummaryEmailService } from '@/lib/email/votingSummaryService';
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
         const testEmailSent = await notificationService.sendNotificationEmail({
           userEmail: testRecipient.email,
-          userName: testRecipient.full_name,
+          userName: testRecipient.full_name || '',
           title: `[TEST] ${emailTemplate.subject.replace('Arc Board Management - ', '')}`,
           message: `This is a test email for voting summary functionality.\n\n${emailTemplate.votingPeriod}\n\nOriginal email would be sent to all board members.`,
           type: 'system'
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         // Log the test email attempt
         await logTestEmail(supabase, {
           userId: user.id,
-          userName: profile.full_name,
+          userName: profile.full_name || '',
           userEmail: user.email || '',
           type,
           itemId,
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -308,7 +308,7 @@ async function getTestableItems(supabase: any): Promise<{
 
     // Process resolutions
     if (!resolutionError && resolutions) {
-      result.resolutions = resolutions.map(resolution => ({
+      result.resolutions = resolutions.map((resolution: any) => ({
         id: resolution.id,
         title: resolution.title,
         status: resolution.status,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VotingSummaryEmailService } from '@/lib/email/votingSummaryService';
 
 /**
@@ -8,7 +8,7 @@ import { VotingSummaryEmailService } from '@/lib/email/votingSummaryService';
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email should be sent based on status
-    if (!force && !shouldSendEmail(itemStatus.status)) {
+    if (!force && !shouldSendEmail(itemStatus.status || '')) {
       return NextResponse.json(
         { 
           success: false, 
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     // Log the manual trigger attempt
     await logManualTrigger(supabase, {
       userId: user.id,
-      userName: profile.full_name,
+      userName: profile.full_name || '',
       userEmail: user.email || '',
       type,
       itemId,
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser();
