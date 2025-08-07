@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/voting-deadlines",
-      "schedule": "0 9 * * *"
-    }
-  ]
-}
