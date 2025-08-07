@@ -12,12 +12,13 @@
 
 ### Deployment Status
 - 🔄 **Vercel deployments rebuilding** - Should succeed now that database migration is complete
-- ✅ **Cron job schedule fixed** - Changed from every minute to daily (Hobby plan compatible)
+- ✅ **Cron job limit fixed** - Removed conflicting cron job (Hobby plan compatible)
 - 📋 **Verification script available** - Run `node scripts/verify-deployment.js` to test
 
 ### Recent Fixes
-- **Cron Job Schedule**: Updated from `* * * * *` to `0 9 * * *` (daily at 9 AM UTC)
-- **Vercel Hobby Plan Compatibility**: Cron jobs now comply with daily limit restriction
+- **Cron Job Limit Issue**: Removed `vercel.json` file to eliminate 3rd cron job
+- **Vercel Hobby Plan Compatibility**: Account already had 2/2 cron jobs, removed conflicting one
+- **Manual Deadline Checks**: Voting deadlines can still be checked via admin interface
 
 ## Migration Details Applied:
 - ✅ email_notifications_enabled column added
@@ -35,6 +36,6 @@
 
 ## Notes
 - Database migration was the blocking issue - now resolved
-- Cron job schedule updated for Vercel Hobby plan compatibility
+- Cron job limit issue resolved for Vercel Hobby plan compatibility
 - All required columns exist in the profiles table
 - System is ready for full voting summary email functionality

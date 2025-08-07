@@ -22,6 +22,7 @@ import { TestVotingSummaryButton } from '@/components/admin/TestVotingSummaryBut
 import { TestVotingStatisticsButton } from '@/components/admin/TestVotingStatisticsButton';
 import { TestEmailTemplateButton } from '@/components/admin/TestEmailTemplateButton';
 import { TestVotingCompletionButton } from '@/components/admin/TestVotingCompletionButton';
+import FixNotificationSystemButton from '@/components/admin/FixNotificationSystemButton';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -328,6 +329,8 @@ export default async function AdminPage() {
             </div>
           </CardContent>
         </Card>
+
+        <FixNotificationSystemButton />
 
         <Card>
           <CardHeader>

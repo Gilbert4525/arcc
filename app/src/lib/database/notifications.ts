@@ -348,6 +348,9 @@ export class NotificationsService {
 
       if (error) throw error;
 
+      // Send bulk email notifications if users have email notifications enabled
+      await this.sendBulkEmailNotificationsIfEnabled(userIds, notificationData);
+
       // Send bulk web push notifications if configured
       await this.sendBulkWebPushNotifications(userIds, notificationData);
 
@@ -355,6 +358,57 @@ export class NotificationsService {
     } catch (error) {
       console.error('Error creating bulk notifications:', error);
       throw error;
+    }
+  }
+
+  // Send bulk email notifications if users have email notifications enabled
+  private async sendBulkEmailNotificationsIfEnabled(
+    userIds: string[],
+    notificationData: Omit<CreateNotificationData, 'user_id'>
+  ): Promise<void> {
+    try {
+      // Get users with email notifications enabled
+      const { data: usersWithEmailEnabled, error } = await this.supabase
+        .from('profiles')
+        .select(`
+          id,
+          email,
+          full_name,
+          notification_preferences!inner(email_notifications)
+        `)
+        .in('id', userIds)
+        .eq('notification_preferences.email_notifications', true);
+
+      if (error) {
+        console.error('Error fetching users for bulk email notifications:', error);
+        return;
+      }
+
+      if (!usersWithEmailEnabled || usersWithEmailEnabled.length === 0) {
+        console.log('No users with email notifications enabled');
+        return;
+      }
+
+      // Create email notification data for each user
+      const emailNotifications = usersWithEmailEnabled.map(user => 
+        createEmailNotificationData(
+          { email: user.email, full_name: user.full_name },
+          {
+            title: notificationData.title,
+            message: notificationData.message,
+            type: notificationData.type,
+            action_url: notificationData.action_url,
+            action_text: notificationData.action_text,
+          }
+        )
+      );
+
+      // Send bulk emails
+      const success = await this.emailService.sendBulkNotificationEmails(emailNotifications);
+      console.log(`Bulk email send result: ${success ? 'successful' : 'failed'} for ${emailNotifications.length} users`);
+    } catch (error) {
+      console.error('Error sending bulk email notifications:', error);
+      // Don't throw error - email failure shouldn't break notification creation
     }
   }
 
