@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Step 2: Check database accessibility
-    let database = {
+    const database = {
       profilesAccessible: false,
       notificationsAccessible: false,
       userCount: 0

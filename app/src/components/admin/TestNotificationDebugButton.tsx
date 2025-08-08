@@ -7,7 +7,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   AlertCircle, 
   CheckCircle, 
-  Mail, 
   Loader2,
   Bug
 } from 'lucide-react';
