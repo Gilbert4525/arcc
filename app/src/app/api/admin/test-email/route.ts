@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { EmailNotificationService, createEmailNotificationData } from '@/lib/email/notifications';
+import { createGmailEmailNotificationData } from '@/lib/email/gmailSmtp';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,9 +12,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const emailService = new EmailNotificationService();
+    // Use Gmail SMTP service
+    const { GmailSMTPService } = await import('@/lib/email/gmailSmtp');
+    const emailService = new GmailSMTPService();
     
-    const testEmailData = createEmailNotificationData(
+    const testEmailData = createGmailEmailNotificationData(
       { 
         email: email, 
         full_name: name || 'Test User' 

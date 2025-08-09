@@ -110,9 +110,9 @@ export async function POST(request: NextRequest) {
         const emailService = new VotingSummaryEmailService(supabase);
         const emailTemplate = emailService.generateEmailPreview(summaryData, type);
 
-        // Send test email using the existing email service
-        const { EmailNotificationService } = await import('@/lib/email/notifications');
-        const notificationService = new EmailNotificationService();
+        // Send test email using Gmail SMTP service
+        const { GmailSMTPService } = await import('@/lib/email/gmailSmtp');
+        const notificationService = new GmailSMTPService();
 
         const testEmailSent = await notificationService.sendNotificationEmail({
           userEmail: testRecipient.email,

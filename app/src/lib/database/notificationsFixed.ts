@@ -54,10 +54,24 @@ export interface UpdateNotificationPreferencesData {
 }
 
 export class NotificationsServiceFixed {
-  private emailService: EmailNotificationService;
+  private emailService: any = null;
 
   constructor(private supabase: SupabaseClient) {
-    this.emailService = new EmailNotificationService();
+    this.emailService = null; // Will be lazy-loaded
+  }
+
+  // Lazy load Gmail SMTP service
+  private async getEmailService() {
+    if (!this.emailService && typeof window === 'undefined') {
+      try {
+        const { GmailSMTPService } = await import('@/lib/email/gmailSmtp');
+        this.emailService = new GmailSMTPService();
+      } catch (error) {
+        console.error('Failed to load Gmail SMTP service:', error);
+        this.emailService = null;
+      }
+    }
+    return this.emailService;
   }
 
   // Get user notifications with pagination
@@ -181,8 +195,14 @@ export class NotificationsServiceFixed {
         }
       );
 
-      // Send email
-      const success = await this.emailService.sendNotificationEmail(emailData);
+      // Send email using Gmail SMTP
+      const emailService = await this.getEmailService();
+      if (!emailService) {
+        console.error('Gmail SMTP service not available');
+        return;
+      }
+
+      const success = await emailService.sendNotificationEmail(emailData);
       console.log(`📧 Email notification ${success ? 'sent successfully' : 'failed'} to ${profile.email}`);
     } catch (error) {
       console.error('Error sending email notification:', error);
@@ -354,8 +374,14 @@ export class NotificationsServiceFixed {
         )
       );
 
-      // Send bulk emails
-      const success = await this.emailService.sendBulkNotificationEmails(emailNotifications);
+      // Send bulk emails using Gmail SMTP
+      const emailService = await this.getEmailService();
+      if (!emailService) {
+        console.error('Gmail SMTP service not available');
+        return;
+      }
+
+      const success = await emailService.sendBulkNotificationEmails(emailNotifications);
       console.log(`📧 Bulk email send result: ${success ? 'successful' : 'failed'} for ${emailNotifications.length} users`);
       
       // Log individual recipients for debugging

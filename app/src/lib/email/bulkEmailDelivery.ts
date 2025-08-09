@@ -29,13 +29,27 @@ export interface EmailPersonalization {
 
 export class BulkEmailDeliveryService {
   private supabase: SupabaseClient<Database>;
-  private emailService: EmailNotificationService;
+  private emailService: any = null;
   private recipientManager: RecipientManager;
 
   constructor(supabase: SupabaseClient<Database>) {
     this.supabase = supabase;
-    this.emailService = new EmailNotificationService();
+    this.emailService = null; // Will be lazy-loaded
     this.recipientManager = new RecipientManager(supabase);
+  }
+
+  // Lazy load Gmail SMTP service
+  private async getEmailService() {
+    if (!this.emailService && typeof window === 'undefined') {
+      try {
+        const { GmailSMTPService } = await import('@/lib/email/gmailSmtp');
+        this.emailService = new GmailSMTPService();
+      } catch (error) {
+        console.error('Failed to load Gmail SMTP service:', error);
+        this.emailService = null;
+      }
+    }
+    return this.emailService;
   }
 
   /**
@@ -269,8 +283,14 @@ export class BulkEmailDeliveryService {
     const content = personalization?.personalizedContent || 
                    this.personalizeContent(template.textContent, recipient, personalization?.customFields);
 
-    // Send using the existing email service
-    return await this.emailService.sendNotificationEmail({
+    // Send using Gmail SMTP service
+    const emailService = await this.getEmailService();
+    if (!emailService) {
+      console.error('Gmail SMTP service not available');
+      return false;
+    }
+
+    return await emailService.sendNotificationEmail({
       userEmail: recipient.email,
       userName: recipient.full_name,
       title: subject.replace('Arc Board Management - ', ''),

@@ -68,7 +68,7 @@ interface MinutesWithVotingInfo extends Minutes {
 
 export class VotingSummaryEmailService {
   private supabase: SupabaseClient<Database>;
-  private emailService: EmailNotificationService;
+  private emailService: any = null;
   private statisticsCalculator: VotingStatisticsCalculator;
   private templateEngine: VotingSummaryEmailTemplates;
   private recipientManager: RecipientManager;
@@ -76,11 +76,25 @@ export class VotingSummaryEmailService {
 
   constructor(supabase: SupabaseClient<Database>) {
     this.supabase = supabase;
-    this.emailService = new EmailNotificationService();
+    this.emailService = null; // Will be lazy-loaded
     this.statisticsCalculator = new VotingStatisticsCalculator(supabase);
     this.templateEngine = new VotingSummaryEmailTemplates();
     this.recipientManager = new RecipientManager(supabase);
     this.bulkEmailService = new BulkEmailDeliveryService(supabase);
+  }
+
+  // Lazy load Gmail SMTP service
+  private async getEmailService() {
+    if (!this.emailService && typeof window === 'undefined') {
+      try {
+        const { GmailSMTPService } = await import('@/lib/email/gmailSmtp');
+        this.emailService = new GmailSMTPService();
+      } catch (error) {
+        console.error('Failed to load Gmail SMTP service:', error);
+        this.emailService = null;
+      }
+    }
+    return this.emailService;
   }
 
   /**
@@ -493,8 +507,14 @@ export class VotingSummaryEmailService {
           recipient.email
         );
 
-        // Send using the existing email service with enhanced content
-        const success = await this.emailService.sendNotificationEmail({
+        // Send using Gmail SMTP service
+        const emailService = await this.getEmailService();
+        if (!emailService) {
+          console.error('Gmail SMTP service not available');
+          return false;
+        }
+
+        const success = await emailService.sendNotificationEmail({
           userEmail: recipient.email,
           userName: recipient.full_name,
           title: emailTemplate.subject.replace('Arc Board Management - ', ''),
