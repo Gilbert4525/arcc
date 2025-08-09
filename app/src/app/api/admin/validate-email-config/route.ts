@@ -6,11 +6,12 @@ import { requireAdmin } from '@/lib/auth/middleware';
 export async function POST(request: NextRequest) {
   try {
     // Verify admin access
-    const supabase = createServerSupabaseClient();
-    const user = await requireAdmin(supabase);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const user = await requireAdmin(request);
+    if (user instanceof NextResponse) {
+      return user; // Return the error response
     }
+
+    const supabase = await createServerSupabaseClient();
 
     console.log('🔍 Validating email configuration...');
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     console.log('Environment variables check:', envCheck);
 
     // Test Gmail SMTP service loading
-    let gmailServiceStatus = {
+    const gmailServiceStatus = {
       canLoad: false,
       canInitialize: false,
       canConnect: false,
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Test notification service
-    let notificationServiceStatus = {
+    const notificationServiceStatus = {
       canLoadService: false,
       canLoadHelpers: false,
       error: null as string | null
@@ -119,9 +120,9 @@ export async function POST(request: NextRequest) {
 }
 
 function generateRecommendations(
-  envCheck: any,
-  gmailStatus: any,
-  notificationStatus: any
+  envCheck: { GMAIL_EMAIL: { exists: boolean }; GMAIL_APP_PASSWORD: { exists: boolean } },
+  gmailStatus: { canLoad: boolean; canInitialize: boolean; canConnect: boolean },
+  notificationStatus: { canLoadService: boolean; canLoadHelpers: boolean }
 ): string[] {
   const recommendations: string[] = [];
 
