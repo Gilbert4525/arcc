@@ -29,11 +29,13 @@ const nextConfig: NextConfig = {
         querystring: false,
         path: false,
         os: false,
+        dns: false,
+        child_process: false,
       };
       
-      // Exclude web-push from client bundle
+      // Exclude server-only packages from client bundle
       config.externals = config.externals || [];
-      config.externals.push('web-push');
+      config.externals.push('web-push', 'nodemailer');
     }
     
     return config;

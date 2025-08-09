@@ -1,5 +1,4 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { GmailSMTPService, createGmailEmailNotificationData } from '@/lib/email/gmailSmtp';
 import { DOCUMENT_TEMPLATES } from '@/lib/notifications/templates';
 import { getSafeWebPushService, WebPushNotificationData } from '@/lib/notifications/webPushServerSafe';
 
@@ -54,10 +53,38 @@ export interface UpdateNotificationPreferencesData {
 }
 
 export class NotificationsService {
-  private emailService: GmailSMTPService;
+  private emailService: any = null;
 
   constructor(private supabase: SupabaseClient) {
-    this.emailService = new GmailSMTPService();
+    // Email service will be lazy-loaded when needed
+  }
+
+  // Lazy load the Gmail SMTP service only when needed (server-side only)
+  private async getEmailService() {
+    if (!this.emailService && typeof window === 'undefined') {
+      try {
+        const { GmailSMTPService } = await import('@/lib/email/gmailSmtp');
+        this.emailService = new GmailSMTPService();
+      } catch (error) {
+        console.error('Failed to load Gmail SMTP service:', error);
+        this.emailService = null;
+      }
+    }
+    return this.emailService;
+  }
+
+  // Lazy load the email helper function
+  private async getEmailHelpers() {
+    if (typeof window === 'undefined') {
+      try {
+        const { createGmailEmailNotificationData } = await import('@/lib/email/gmailSmtp');
+        return { createGmailEmailNotificationData };
+      } catch (error) {
+        console.error('Failed to load Gmail SMTP helpers:', error);
+        return null;
+      }
+    }
+    return null;
   }
 
   // Get user notifications with pagination
@@ -164,19 +191,25 @@ export class NotificationsService {
       }
 
       // Create email data
-      const emailData = createGmailEmailNotificationData(
-        { email: profile.email, full_name: profile.full_name },
-        {
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          action_url: notification.action_url,
-          action_text: notification.action_text,
-        }
-      );
+      const emailHelpers = await this.getEmailHelpers();
+      if (emailHelpers) {
+        const emailData = emailHelpers.createGmailEmailNotificationData(
+          { email: profile.email, full_name: profile.full_name },
+          {
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            action_url: notification.action_url,
+            action_text: notification.action_text,
+          }
+        );
 
-      // Send email
-      await this.emailService.sendNotificationEmail(emailData);
+        // Send email
+        const emailService = await this.getEmailService();
+        if (emailService) {
+          await emailService.sendNotificationEmail(emailData);
+        }
+      }
     } catch (error) {
       console.error('Error sending email notification:', error);
       // Don't throw error - email failure shouldn't break notification creation
@@ -400,22 +433,26 @@ export class NotificationsService {
       }
 
       // Create email notification data for each user
-      const emailNotifications = usersWithEmailEnabled.map(user => 
-        createGmailEmailNotificationData(
-          { email: user.email, full_name: user.full_name },
-          {
-            title: notificationData.title,
-            message: notificationData.message,
-            type: notificationData.type,
-            action_url: notificationData.action_url,
-            action_text: notificationData.action_text,
-          }
-        )
-      );
+      const emailHelpers = await this.getEmailHelpers();
+      if (emailHelpers) {
+        const emailNotifications = usersWithEmailEnabled.map(user => 
+          emailHelpers.createGmailEmailNotificationData(
+            { email: user.email, full_name: user.full_name },
+            {
+              title: notificationData.title,
+              message: notificationData.message,
+              type: notificationData.type,
+              action_url: notificationData.action_url,
+              action_text: notificationData.action_text,
+            }
+          )
+        );
 
-      // Send bulk emails
-      const success = await this.emailService.sendBulkNotificationEmails(emailNotifications);
-      console.log(`Bulk email send result: ${success ? 'successful' : 'failed'} for ${emailNotifications.length} users`);
+        // Send bulk emails
+        const emailService = await this.getEmailService();
+        const success = emailService ? await emailService.sendBulkNotificationEmails(emailNotifications) : false;
+        console.log(`Bulk email send result: ${success ? 'successful' : 'failed'} for ${emailNotifications.length} users`);
+      }
     } catch (error) {
       console.error('Error sending bulk email notifications:', error);
       // Don't throw error - email failure shouldn't break notification creation

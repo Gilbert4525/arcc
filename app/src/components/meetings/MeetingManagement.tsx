@@ -16,7 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { createClient } from '@/lib/supabase/client';
-import { getDatabaseServices } from '@/lib/database';
+import { getClientDatabaseServices } from '@/lib/database/client';
 import { Database, Json } from '@/types/database';
 
 // Types based on exact database schema
@@ -76,7 +76,7 @@ export default function MeetingManagement() {
 
   // Initialize services
   const supabase = createClient();
-  const { meetings: meetingsService } = getDatabaseServices(supabase);
+  const { meetings: meetingsService } = getClientDatabaseServices(supabase);
 
   const loadMeetings = useCallback(async () => {
     try {
@@ -114,7 +114,7 @@ export default function MeetingManagement() {
   const loadCategories = useCallback(async () => {
     try {
       // Create a fresh service instance to avoid dependency issues
-      const { categories: freshCategoriesService } = getDatabaseServices(supabase);
+      const { categories: freshCategoriesService } = getClientDatabaseServices(supabase);
       const data = await freshCategoriesService.getCategories();
       setCategories(data);
     } catch (error) {
