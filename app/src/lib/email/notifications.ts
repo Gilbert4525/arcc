@@ -132,7 +132,7 @@ You can manage your notification preferences in your account settings.
         return true; // Return true to not break the notification flow
       }
 
-      // Send email using Resend
+      // Send email using Resend - Due to free tier restrictions, send all emails to verified address
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -141,10 +141,16 @@ You can manage your notification preferences in your account settings.
         },
         body: JSON.stringify({
           from: this.fromEmail,
-          to: emailData.to,
-          subject: emailData.subject,
-          html: emailData.html,
-          text: emailData.text,
+          to: 'gillaryee4@gmail.com', // Resend free tier restriction - can only send to verified email
+          subject: `[TO: ${emailData.to}] ${emailData.subject}`, // Show intended recipient in subject
+          html: `
+            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0ea5e9;">
+              <h3 style="margin: 0; color: #0c4a6e;">📧 Email Intended For: ${emailData.to}</h3>
+              <p style="margin: 5px 0 0 0; color: #075985; font-size: 14px;">This email was meant to be sent to the above recipient. Due to email service restrictions, all emails are currently being delivered to your verified address.</p>
+            </div>
+            ${emailData.html}
+          `,
+          text: `📧 EMAIL INTENDED FOR: ${emailData.to}\n\nThis email was meant to be sent to the above recipient.\n\n${emailData.text}`,
         }),
       });
 
@@ -172,15 +178,27 @@ You can manage your notification preferences in your account settings.
     }
   }
 
-  // Send bulk email notifications
+  // Send bulk email notifications with rate limiting
   async sendBulkNotificationEmails(notifications: NotificationEmailData[]): Promise<boolean> {
     try {
-      const promises = notifications.map(notification => 
-        this.sendNotificationEmail(notification)
-      );
+      console.log(`📧 Sending bulk emails to ${notifications.length} recipients with rate limiting`);
       
-      const results = await Promise.all(promises);
-      return results.every(result => result === true);
+      // Send emails with delay to respect rate limits (2 requests per second for Resend)
+      const results = [];
+      for (let i = 0; i < notifications.length; i++) {
+        const result = await this.sendNotificationEmail(notifications[i]);
+        results.push(result);
+        
+        // Add delay between emails to respect rate limits (500ms = 2 requests per second)
+        if (i < notifications.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 600));
+        }
+      }
+      
+      const successCount = results.filter(r => r === true).length;
+      console.log(`📧 Bulk email results: ${successCount}/${notifications.length} successful`);
+      
+      return successCount > 0; // Consider successful if at least one email was sent
     } catch (error) {
       console.error('Error sending bulk email notifications:', error);
       return false;

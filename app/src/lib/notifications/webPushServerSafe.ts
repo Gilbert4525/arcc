@@ -85,7 +85,9 @@ export class SafeWebPushService {
     }
 
     try {
-      const response = await fetch('/api/notifications/send-push', {
+      // Use absolute URL for server-side fetch
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const response = await fetch(`${baseUrl}/api/notifications/send-push`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

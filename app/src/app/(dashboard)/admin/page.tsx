@@ -23,6 +23,8 @@ import { TestVotingStatisticsButton } from '@/components/admin/TestVotingStatist
 import { TestEmailTemplateButton } from '@/components/admin/TestEmailTemplateButton';
 import { TestVotingCompletionButton } from '@/components/admin/TestVotingCompletionButton';
 import FixNotificationSystemButton from '@/components/admin/FixNotificationSystemButton';
+import { TestNotificationSystemButton } from '@/components/admin/TestNotificationSystemButton';
+import { TestGmailButton } from '@/components/admin/TestGmailButton';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -401,6 +403,30 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent>
             <TestVotingCompletionButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Notification System Debug</CardTitle>
+            <CardDescription>
+              Debug the notification system to identify email delivery issues
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestNotificationSystemButton />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Gmail SMTP Test</CardTitle>
+            <CardDescription>
+              Test the Gmail SMTP email service (Production Email System)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TestGmailButton />
           </CardContent>
         </Card>
 

@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { EmailNotificationService, createEmailNotificationData } from '@/lib/email/notifications';
+import { GmailSMTPService, createGmailEmailNotificationData } from '@/lib/email/gmailSmtp';
 import { DOCUMENT_TEMPLATES } from '@/lib/notifications/templates';
 import { getSafeWebPushService, WebPushNotificationData } from '@/lib/notifications/webPushServerSafe';
 
@@ -54,10 +54,10 @@ export interface UpdateNotificationPreferencesData {
 }
 
 export class NotificationsService {
-  private emailService: EmailNotificationService;
+  private emailService: GmailSMTPService;
 
   constructor(private supabase: SupabaseClient) {
-    this.emailService = new EmailNotificationService();
+    this.emailService = new GmailSMTPService();
   }
 
   // Get user notifications with pagination
@@ -164,7 +164,7 @@ export class NotificationsService {
       }
 
       // Create email data
-      const emailData = createEmailNotificationData(
+      const emailData = createGmailEmailNotificationData(
         { email: profile.email, full_name: profile.full_name },
         {
           title: notification.title,
@@ -367,31 +367,41 @@ export class NotificationsService {
     notificationData: Omit<CreateNotificationData, 'user_id'>
   ): Promise<void> {
     try {
-      // Get users with email notifications enabled
-      const { data: usersWithEmailEnabled, error } = await this.supabase
+      // Get all users first
+      const { data: allUsers, error: usersError } = await this.supabase
         .from('profiles')
-        .select(`
-          id,
-          email,
-          full_name,
-          notification_preferences!inner(email_notifications)
-        `)
+        .select('id, email, full_name')
         .in('id', userIds)
-        .eq('notification_preferences.email_notifications', true);
+        .eq('is_active', true);
 
-      if (error) {
-        console.error('Error fetching users for bulk email notifications:', error);
+      if (usersError || !allUsers) {
+        console.error('Error fetching users for bulk email notifications:', usersError);
         return;
       }
 
-      if (!usersWithEmailEnabled || usersWithEmailEnabled.length === 0) {
+      // Filter users who should receive email notifications
+      const usersWithEmailEnabled = [];
+      for (const user of allUsers) {
+        try {
+          const preferences = await this.getNotificationPreferences(user.id);
+          if (preferences?.email_notifications) {
+            usersWithEmailEnabled.push(user);
+          }
+        } catch (error) {
+          console.error(`Error checking preferences for user ${user.id}:`, error);
+          // Default to sending email if we can't check preferences
+          usersWithEmailEnabled.push(user);
+        }
+      }
+
+      if (usersWithEmailEnabled.length === 0) {
         console.log('No users with email notifications enabled');
         return;
       }
 
       // Create email notification data for each user
       const emailNotifications = usersWithEmailEnabled.map(user => 
-        createEmailNotificationData(
+        createGmailEmailNotificationData(
           { email: user.email, full_name: user.full_name },
           {
             title: notificationData.title,
@@ -856,7 +866,8 @@ export class NotificationsService {
       const { data, error } = await this.supabase
         .from('profiles')
         .select('id')
-        .eq('role', 'board_member');
+        .in('role', ['admin', 'board_member'])
+        .eq('is_active', true);
 
       if (error) throw error;
       return data?.map(profile => profile.id) || [];
@@ -900,9 +911,16 @@ export class NotificationsService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async getEligibleVoters(_resolutionId: string): Promise<string[]> {
     try {
-      // For now, all board members are eligible voters
+      // For now, all board members and admins are eligible voters
       // This can be enhanced later with specific voter eligibility rules
-      return await this.getBoardMembers();
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['admin', 'board_member'])
+        .eq('is_active', true);
+
+      if (error) throw error;
+      return data?.map(profile => profile.id) || [];
     } catch (error) {
       console.error('Error fetching eligible voters:', error);
       return [];
