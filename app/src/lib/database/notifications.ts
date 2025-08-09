@@ -63,10 +63,22 @@ export class NotificationsService {
   private async getEmailService() {
     if (!this.emailService && typeof window === 'undefined') {
       try {
+        console.log('🔄 Loading Gmail SMTP service...');
         const { GmailSMTPService } = await import('@/lib/email/gmailSmtp');
         this.emailService = new GmailSMTPService();
+        console.log('✅ Gmail SMTP service loaded successfully');
       } catch (error) {
-        console.error('Failed to load Gmail SMTP service:', error);
+        console.error('❌ CRITICAL: Failed to load Gmail SMTP service:', error);
+        console.error('This will prevent all email notifications from being sent');
+        
+        // Log environment status for debugging
+        console.error('Environment check:', {
+          NODE_ENV: process.env.NODE_ENV,
+          hasGmailEmail: !!process.env.GMAIL_EMAIL,
+          hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD,
+          isServer: typeof window === 'undefined'
+        });
+        
         this.emailService = null;
       }
     }
@@ -192,23 +204,36 @@ export class NotificationsService {
 
       // Create email data
       const emailHelpers = await this.getEmailHelpers();
-      if (emailHelpers) {
-        const emailData = emailHelpers.createGmailEmailNotificationData(
-          { email: profile.email, full_name: profile.full_name },
-          {
-            title: notification.title,
-            message: notification.message,
-            type: notification.type,
-            action_url: notification.action_url,
-            action_text: notification.action_text,
-          }
-        );
+      if (!emailHelpers) {
+        console.error('❌ Email helpers not available - skipping email notification');
+        return;
+      }
 
-        // Send email
-        const emailService = await this.getEmailService();
-        if (emailService) {
-          await emailService.sendNotificationEmail(emailData);
+      const emailData = emailHelpers.createGmailEmailNotificationData(
+        { email: profile.email, full_name: profile.full_name },
+        {
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          action_url: notification.action_url,
+          action_text: notification.action_text,
         }
+      );
+
+      // Send email
+      const emailService = await this.getEmailService();
+      if (!emailService) {
+        console.error('❌ Gmail SMTP service not available - email notification failed');
+        console.error('User affected:', profile.email);
+        console.error('Notification:', notification.title);
+        return;
+      }
+
+      const emailSent = await emailService.sendNotificationEmail(emailData);
+      if (!emailSent) {
+        console.error('❌ Email sending failed for user:', profile.email);
+      } else {
+        console.log('✅ Email notification sent successfully to:', profile.email);
       }
     } catch (error) {
       console.error('Error sending email notification:', error);

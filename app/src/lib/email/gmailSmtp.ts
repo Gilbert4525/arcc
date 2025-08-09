@@ -26,12 +26,21 @@ export class GmailSMTPService {
         this.fromEmail = process.env.GMAIL_EMAIL || 'boardmixllc@gmail.com';
         this.fromName = 'Arc Board Management';
 
+        // Validate required environment variables
+        if (!process.env.GMAIL_EMAIL || !process.env.GMAIL_APP_PASSWORD) {
+            console.error('❌ CRITICAL: Gmail SMTP credentials missing from environment variables');
+            console.error('Required: GMAIL_EMAIL and GMAIL_APP_PASSWORD');
+            console.error('Current GMAIL_EMAIL:', process.env.GMAIL_EMAIL ? '✓ Set' : '❌ Missing');
+            console.error('Current GMAIL_APP_PASSWORD:', process.env.GMAIL_APP_PASSWORD ? '✓ Set' : '❌ Missing');
+            throw new Error('Gmail SMTP credentials not configured. Check environment variables.');
+        }
+
         // Create Gmail SMTP transporter
         this.transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: this.fromEmail,
-                pass: process.env.GMAIL_APP_PASSWORD || '', // App password from environment
+                pass: process.env.GMAIL_APP_PASSWORD, // App password from environment
             },
             // Additional security and reliability settings
             secure: true,
@@ -40,6 +49,12 @@ export class GmailSMTPService {
             maxConnections: 5,
             maxMessages: 100,
             rateLimit: 2, // Max 2 emails per second (respects Gmail limits)
+        });
+
+        console.log('📧 Gmail SMTP service initialized with:', {
+            email: this.fromEmail,
+            hasPassword: !!process.env.GMAIL_APP_PASSWORD,
+            environment: process.env.NODE_ENV || 'development'
         });
 
         // Verify connection on startup

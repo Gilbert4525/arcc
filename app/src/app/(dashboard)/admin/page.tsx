@@ -25,6 +25,7 @@ import { TestVotingCompletionButton } from '@/components/admin/TestVotingComplet
 import FixNotificationSystemButton from '@/components/admin/FixNotificationSystemButton';
 import { TestNotificationSystemButton } from '@/components/admin/TestNotificationSystemButton';
 import { TestGmailButton } from '@/components/admin/TestGmailButton';
+import { ValidateEmailConfigButton } from '@/components/admin/ValidateEmailConfigButton';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -426,7 +427,10 @@ export default async function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <TestGmailButton />
+            <div className="space-y-4">
+              <TestGmailButton />
+              <ValidateEmailConfigButton />
+            </div>
           </CardContent>
         </Card>
 
