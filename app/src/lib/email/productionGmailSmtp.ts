@@ -53,14 +53,14 @@ export class ProductionGmailSMTPService {
         }
 
         return nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
             auth: {
                 user: this.fromEmail,
                 pass: this.appPassword,
             },
             // Serverless-optimized settings
-            secure: true,
-            port: 465,
             pool: false, // No connection pooling in serverless
             maxConnections: 1,
             maxMessages: 1,
