@@ -478,7 +478,7 @@ export class MinutesService {
     try {
       console.log(`Refreshing vote counts for minutes ${minutesId}`);
       
-      // @ts-ignore - Custom function not in generated types
+      // @ts-expect-error - Custom function not in generated types
       const { error } = await this.supabase.rpc('refresh_minutes_vote_counts', {
         minutes_id_param: minutesId
       });
