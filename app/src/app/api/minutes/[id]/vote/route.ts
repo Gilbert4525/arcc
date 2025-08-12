@@ -184,6 +184,7 @@ export async function POST(
 
     try {
       // Call the database function to update vote counts
+      // @ts-ignore - Custom function not in generated types
       const { error: countError } = await supabase.rpc('refresh_minutes_vote_counts', {
         minutes_id_param: resolvedParams.id
       });
