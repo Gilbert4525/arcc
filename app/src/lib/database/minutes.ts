@@ -473,6 +473,27 @@ export class MinutesService {
     }
   }
 
+  // Refresh vote counts for a specific minutes
+  async refreshVoteCounts(minutesId: string): Promise<void> {
+    try {
+      console.log(`Refreshing vote counts for minutes ${minutesId}`);
+      
+      const { error } = await this.supabase.rpc('refresh_minutes_vote_counts', {
+        minutes_id_param: minutesId
+      });
+      
+      if (error) {
+        console.error('Error refreshing vote counts:', error);
+        throw error;
+      }
+      
+      console.log(`Vote counts refreshed successfully for minutes ${minutesId}`);
+    } catch (error) {
+      console.error('Error in refreshVoteCounts:', error);
+      throw error;
+    }
+  }
+
   // Get user's vote for specific minutes
   async getUserVote(minutesId: string): Promise<MinutesVote | null> {
     try {

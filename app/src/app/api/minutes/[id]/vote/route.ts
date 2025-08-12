@@ -179,18 +179,22 @@ export async function POST(
 
     console.log(`[${requestId}] Vote successfully submitted:`, voteResult);
 
-    // Manually update vote counts since database trigger is unreliable
-    console.log(`[${requestId}] Vote submitted successfully - manually updating vote counts`);
+    // Manually update vote counts to ensure they're accurate
+    console.log(`[${requestId}] Vote submitted successfully - refreshing vote counts`);
 
     try {
       // Call the database function to update vote counts
-      // @ts-expect-error - Function will be created by SQL script
-      await supabase.rpc('refresh_minutes_vote_counts', {
+      const { error: countError } = await supabase.rpc('refresh_minutes_vote_counts', {
         minutes_id_param: resolvedParams.id
       });
-      console.log(`[${requestId}] Vote counts updated successfully`);
+      
+      if (countError) {
+        console.error(`[${requestId}] Failed to update vote counts:`, countError);
+      } else {
+        console.log(`[${requestId}] Vote counts refreshed successfully`);
+      }
     } catch (countError) {
-      console.error(`[${requestId}] Failed to update vote counts:`, countError);
+      console.error(`[${requestId}] Error calling refresh function:`, countError);
       // Don't fail the vote submission, just log the error
     }
 
