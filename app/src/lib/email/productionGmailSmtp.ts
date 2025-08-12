@@ -53,25 +53,21 @@ export class ProductionGmailSMTPService {
         }
 
         return nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 465,
-            secure: true,
+            service: 'gmail',
             auth: {
                 user: this.fromEmail,
                 pass: this.appPassword,
             },
             // Serverless-optimized settings
+            secure: true,
+            port: 465,
             pool: false, // No connection pooling in serverless
             maxConnections: 1,
             maxMessages: 1,
             connectionTimeout: 25000, // 25 seconds (under Vercel's 30s limit)
             greetingTimeout: 25000,
             socketTimeout: 25000,
-            // Additional reliability settings
-            tls: {
-                rejectUnauthorized: true
-            }
-        });
+        } as any);
     }
 
     // Generate HTML email template (same as existing service for consistency)

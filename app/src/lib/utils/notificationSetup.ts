@@ -5,7 +5,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
  * Ensures all users have proper notification preferences set up
  */
 export class NotificationSetupService {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient) { }
 
   /**
    * Ensure all users have notification preferences

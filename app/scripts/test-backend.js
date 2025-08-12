@@ -53,12 +53,12 @@ async function testBackend() {
     // Test 3: Check if we can create a profile
     console.log('\n2️⃣ Testing Profiles...');
     const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-    
+
     if (usersError) {
       console.log('❌ Users fetch failed:', usersError.message);
     } else if (users.length > 0) {
       const testUser = users[0];
-      
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -83,9 +83,9 @@ async function testBackend() {
     console.log('\n3️⃣ Testing API Structure...');
     const fs = require('fs');
     const path = require('path');
-    
+
     const apiPath = path.join(__dirname, '..', 'src', 'app', 'api');
-    
+
     if (fs.existsSync(apiPath)) {
       const routes = fs.readdirSync(apiPath);
       console.log('✅ API routes found:', routes.join(', '));
@@ -96,7 +96,7 @@ async function testBackend() {
     // Test 5: Check database services
     console.log('\n4️⃣ Testing Database Services...');
     const servicesPath = path.join(__dirname, '..', 'src', 'lib', 'database');
-    
+
     if (fs.existsSync(servicesPath)) {
       const services = fs.readdirSync(servicesPath);
       console.log('✅ Database services found:', services.join(', '));
