@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Calendar, Clock, MapPin, Users, Plus, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Plus, Edit, Trash2, Eye, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -74,6 +74,8 @@ export default function MeetingManagement() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [userRole, setUserRole] = useState<string>('board_member');
+  const [selectedMeeting, setSelectedMeeting] = useState<MeetingWithDetails | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
   // Initialize services
   const supabase = createClient();
@@ -267,6 +269,11 @@ export default function MeetingManagement() {
     }
   }, [supabase, editingMeeting, meetingsService, loadMeetings]);
 
+  const handleViewDetails = useCallback((meeting: MeetingWithDetails) => {
+    setSelectedMeeting(meeting);
+    setIsDetailsDialogOpen(true);
+  }, []);
+
   // Data fetching effects - run only once on mount
   useEffect(() => {
     loadMeetings();
@@ -332,7 +339,7 @@ export default function MeetingManagement() {
               meeting={meeting}
               onEdit={userRole === 'admin' ? handleEditMeeting : undefined}
               onDelete={userRole === 'admin' ? handleDeleteMeeting : undefined}
-              showFullDetails={true}
+              onViewDetails={handleViewDetails}
               isAdmin={userRole === 'admin'}
             />
           ))
@@ -355,6 +362,16 @@ export default function MeetingManagement() {
           isEditing={!!editingMeeting}
         />
       )}
+
+      {/* Meeting Details Dialog - For all users */}
+      <MeetingDetailsDialog
+        isOpen={isDetailsDialogOpen}
+        onClose={() => {
+          setIsDetailsDialogOpen(false);
+          setSelectedMeeting(null);
+        }}
+        meeting={selectedMeeting}
+      />
     </div>
   );
 }
@@ -364,26 +381,13 @@ interface MeetingCardProps {
   meeting: MeetingWithDetails;
   onEdit?: (meeting: MeetingWithDetails) => void;
   onDelete?: (id: string) => void;
-  showFullDetails?: boolean;
+  onViewDetails: (meeting: MeetingWithDetails) => void;
   isAdmin?: boolean;
 }
 
-function MeetingCard({ meeting, onEdit, onDelete, showFullDetails = false, isAdmin = false }: MeetingCardProps) {
+function MeetingCard({ meeting, onEdit, onDelete, onViewDetails, isAdmin = false }: MeetingCardProps) {
   const meetingDate = meeting.meeting_date ? format(parseISO(meeting.meeting_date), 'PPP') : 'Date TBD';
   const meetingTime = meeting.meeting_date ? format(parseISO(meeting.meeting_date), 'p') : '';
-
-  // Parse agenda safely
-  let parsedAgenda: AgendaItem[] = [];
-  if (meeting.agenda && showFullDetails) {
-    try {
-      const agendaData = typeof meeting.agenda === 'string' 
-        ? JSON.parse(meeting.agenda) 
-        : meeting.agenda;
-      parsedAgenda = Array.isArray(agendaData) ? agendaData : [];
-    } catch (error) {
-      console.warn('Error parsing agenda:', error);
-    }
-  }
 
   return (
     <Card>
@@ -407,47 +411,38 @@ function MeetingCard({ meeting, onEdit, onDelete, showFullDetails = false, isAdm
               )}
             </div>
           </div>
-          {isAdmin && (
-            <div className="flex gap-2">
-              {onEdit && (
-                <Button variant="outline" size="sm" onClick={() => onEdit(meeting)}>
-                  <Edit className="w-4 h-4" />
-                </Button>
-              )}
-              {onDelete && (
-                <Button variant="outline" size="sm" onClick={() => onDelete(meeting.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex gap-2">
+            {/* View Details button for all users */}
+            <Button variant="outline" size="sm" onClick={() => onViewDetails(meeting)}>
+              <Eye className="w-4 h-4 mr-1" />
+              View Full Details
+            </Button>
+            
+            {/* Admin-only buttons */}
+            {isAdmin && onEdit && (
+              <Button variant="outline" size="sm" onClick={() => onEdit(meeting)}>
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
+            {isAdmin && onDelete && (
+              <Button variant="outline" size="sm" onClick={() => onDelete(meeting.id)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {meeting.description && (
-            <p className="text-gray-700">{meeting.description}</p>
+            <p className="text-gray-700 line-clamp-2">{meeting.description}</p>
           )}
           
           <div className="flex flex-wrap gap-4 text-sm">
             {meeting.location && (
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
-                {meeting.location}
-              </div>
-            )}
-            
-            {meeting.meeting_link && (
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <a 
-                  href={meeting.meeting_link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline"
-                >
-                  Join Meeting
-                </a>
+                <span className="truncate max-w-[150px]">{meeting.location}</span>
               </div>
             )}
             
@@ -471,36 +466,6 @@ function MeetingCard({ meeting, onEdit, onDelete, showFullDetails = false, isAdm
             <div className="flex items-center gap-1 text-sm text-gray-600">
               <Users className="w-4 h-4" />
               Created by {meeting.creator.full_name || meeting.creator.email}
-            </div>
-          )}
-
-          {/* Show agenda for board members and admin */}
-          {showFullDetails && parsedAgenda.length > 0 && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Meeting Agenda
-              </h4>
-              <div className="space-y-2">
-                {parsedAgenda.map((item, index) => (
-                  <div key={item.id || index} className="border-l-2 border-blue-200 pl-3">
-                    <div className="flex justify-between items-start">
-                      <h5 className="font-medium text-sm">{item.title}</h5>
-                      <span className="text-xs text-gray-500 ml-2">
-                        {item.duration} min
-                      </span>
-                    </div>
-                    {item.description && (
-                      <p className="text-xs text-gray-600 mt-1">{item.description}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 pt-2 border-t border-gray-200">
-                <p className="text-xs text-gray-500">
-                  Total estimated time: {parsedAgenda.reduce((total, item) => total + (item.duration || 0), 0)} minutes
-                </p>
-              </div>
             </div>
           )}
         </div>
@@ -739,6 +704,172 @@ function MeetingDialog({
             </Button>
           </div>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Meeting Details Dialog Component
+interface MeetingDetailsDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  meeting: MeetingWithDetails | null;
+}
+
+function MeetingDetailsDialog({ isOpen, onClose, meeting }: MeetingDetailsDialogProps) {
+  if (!meeting) return null;
+
+  const meetingDate = meeting.meeting_date ? format(parseISO(meeting.meeting_date), 'PPP') : 'Date TBD';
+  const meetingTime = meeting.meeting_date ? format(parseISO(meeting.meeting_date), 'p') : '';
+
+  // Parse agenda safely
+  let parsedAgenda: AgendaItem[] = [];
+  if (meeting.agenda) {
+    try {
+      const agendaData = typeof meeting.agenda === 'string' 
+        ? JSON.parse(meeting.agenda) 
+        : meeting.agenda;
+      parsedAgenda = Array.isArray(agendaData) ? agendaData : [];
+    } catch (error) {
+      console.warn('Error parsing agenda:', error);
+    }
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl">{meeting.title}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {/* Meeting Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                <div>
+                  <p className="font-medium">Date & Time</p>
+                  <p className="text-sm text-gray-600">{meetingDate} at {meetingTime}</p>
+                </div>
+              </div>
+              
+              {meeting.duration_minutes && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-green-600" />
+                  <div>
+                    <p className="font-medium">Duration</p>
+                    <p className="text-sm text-gray-600">{meeting.duration_minutes} minutes</p>
+                  </div>
+                </div>
+              )}
+              
+              {meeting.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-red-600" />
+                  <div>
+                    <p className="font-medium">Location</p>
+                    <p className="text-sm text-gray-600">{meeting.location}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-3">
+              {meeting.meeting_link && (
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="w-5 h-5 text-purple-600" />
+                  <div>
+                    <p className="font-medium">Meeting Link</p>
+                    <a 
+                      href={meeting.meeting_link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
+                    >
+                      Join Meeting
+                    </a>
+                  </div>
+                </div>
+              )}
+              
+              {meeting.category && (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full" style={{ backgroundColor: meeting.category.color || '#gray' }}></div>
+                  <div>
+                    <p className="font-medium">Category</p>
+                    <p className="text-sm text-gray-600">{meeting.category.name}</p>
+                  </div>
+                </div>
+              )}
+              
+              {meeting.meeting_type && (
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-orange-600" />
+                  <div>
+                    <p className="font-medium">Meeting Type</p>
+                    <p className="text-sm text-gray-600">
+                      {meeting.meeting_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          {meeting.description && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Description</h3>
+              <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">{meeting.description}</p>
+            </div>
+          )}
+
+          {/* Agenda */}
+          {parsedAgenda.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Meeting Agenda
+              </h3>
+              <div className="space-y-4">
+                {parsedAgenda.map((item, index) => (
+                  <div key={item.id || index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-medium text-lg">{item.title}</h4>
+                      <Badge variant="outline" className="ml-2">
+                        {item.duration} min
+                      </Badge>
+                    </div>
+                    {item.description && (
+                      <p className="text-gray-600 text-sm">{item.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm font-medium text-blue-800">
+                  Total estimated time: {parsedAgenda.reduce((total, item) => total + (item.duration || 0), 0)} minutes
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Meeting Creator */}
+          {meeting.creator && (
+            <div className="border-t pt-4">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Users className="w-4 h-4" />
+                <span>Created by {meeting.creator.full_name || meeting.creator.email}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Close Button */}
+          <div className="flex justify-end pt-4">
+            <Button onClick={onClose}>Close</Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
