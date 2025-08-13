@@ -684,12 +684,19 @@ function MeetingDialog({
                       </Button>
                     </div>
                   </div>
-                  <Textarea
-                    placeholder="Description (optional)"
-                    value={item.description || ''}
-                    onChange={(e) => updateAgendaItem(index, { description: e.target.value })}
-                    rows={2}
-                  />
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Description (optional) - Use line breaks for better formatting"
+                      value={item.description || ''}
+                      onChange={(e) => updateAgendaItem(index, { description: e.target.value })}
+                      rows={3}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <span>💡</span>
+                      Tip: Press Enter to create line breaks for better formatting in the meeting details
+                    </p>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -829,28 +836,83 @@ function MeetingDetailsDialog({ isOpen, onClose, meeting }: MeetingDetailsDialog
           {parsedAgenda.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
+                <Calendar className="w-5 h-5 text-blue-600" />
                 Meeting Agenda
               </h3>
               <div className="space-y-4">
                 {parsedAgenda.map((item, index) => (
-                  <div key={item.id || index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-lg">{item.title}</h4>
-                      <Badge variant="outline" className="ml-2">
-                        {item.duration} min
-                      </Badge>
+                  <div key={item.id || index} className="relative border border-gray-200 rounded-lg p-5 bg-gradient-to-r from-gray-50 to-white shadow-sm hover:shadow-md transition-shadow">
+                    {/* Agenda Item Number */}
+                    <div className="absolute -left-3 -top-3 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+                      {index + 1}
                     </div>
+                    
+                    <div className="flex justify-between items-start mb-3 ml-2">
+                      <h4 className="font-semibold text-lg text-gray-800 pr-4">{item.title}</h4>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Clock className="w-4 h-4 text-green-600" />
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          {item.duration} min
+                        </Badge>
+                      </div>
+                    </div>
+                    
                     {item.description && (
-                      <p className="text-gray-600 text-sm">{item.description}</p>
+                      <div className="ml-2 mt-3 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-400">
+                        <div className="text-gray-700 text-sm leading-relaxed">
+                          {item.description.split('\n').map((line, lineIndex) => (
+                            <div key={lineIndex} className="mb-1">
+                              {line.trim() === '' ? (
+                                <div className="h-2"></div>
+                              ) : (
+                                <span>{line}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
+                    
+                    {/* Progress indicator */}
+                    <div className="mt-4 ml-2">
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span>Agenda Item {index + 1} of {parsedAgenda.length}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm font-medium text-blue-800">
-                  Total estimated time: {parsedAgenda.reduce((total, item) => total + (item.duration || 0), 0)} minutes
-                </p>
+              
+              {/* Enhanced Summary Section */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Total Meeting Duration</p>
+                      <p className="text-lg font-bold text-blue-800">
+                        {parsedAgenda.reduce((total, item) => total + (item.duration || 0), 0)} minutes
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-blue-700">
+                      {parsedAgenda.length} agenda {parsedAgenda.length === 1 ? 'item' : 'items'}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Estimated end: {meeting.meeting_date ? 
+                        format(
+                          new Date(new Date(meeting.meeting_date).getTime() + 
+                          parsedAgenda.reduce((total, item) => total + (item.duration || 0), 0) * 60000), 
+                          'p'
+                        ) : 'TBD'
+                      }
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
