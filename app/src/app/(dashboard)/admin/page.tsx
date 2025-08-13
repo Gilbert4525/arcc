@@ -27,6 +27,9 @@ import { TestNotificationSystemButton } from '@/components/admin/TestNotificatio
 import { TestGmailButton } from '@/components/admin/TestGmailButton';
 import { ValidateEmailConfigButton } from '@/components/admin/ValidateEmailConfigButton';
 import TestProductionGmailButton from '@/components/admin/TestProductionGmailButton';
+import { DiagnoseGmailButton } from '@/components/admin/DiagnoseGmailButton';
+import { ValidateGmailConfigButton } from '@/components/admin/ValidateGmailConfigButton';
+import { QuickGmailTestButton } from '@/components/admin/QuickGmailTestButton';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -429,6 +432,9 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              <QuickGmailTestButton />
+              <ValidateGmailConfigButton />
+              <DiagnoseGmailButton />
               <TestGmailButton />
               <TestProductionGmailButton />
               <ValidateEmailConfigButton />
