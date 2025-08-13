@@ -73,6 +73,7 @@ export default function MeetingManagement() {
   const [formData, setFormData] = useState<MeetingFormData>(defaultFormData);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [userRole, setUserRole] = useState<string>('board_member');
 
   // Initialize services
   const supabase = createClient();
@@ -123,96 +124,33 @@ export default function MeetingManagement() {
     }
   }, [supabase]); // Only depend on supabase which is stable
 
-  // Data fetching effects - run only once on mount
-  useEffect(() => {
-    loadMeetings();
-    loadCategories();
-  }, []); // Empty dependency array to run only once on mount
+  const checkUserRole = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setUserRole(profile.role || 'board_member');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+    }
+  }, [supabase]);
 
-  // Computed values - must be before return statement
-  const filteredMeetings = meetings.filter((meeting) => {
-    const matchesSearch = meeting.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (meeting.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || meeting.category_id === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Meeting Management</h1>
-        <Button onClick={() => handleCreateMeeting()}>
-          <Plus className="w-4 h-4 mr-2" />
-          Schedule Meeting
-        </Button>
-      </div>
-      
-      {/* Filters */}
-      <div className="flex gap-4 mb-6">
-        <Input
-          placeholder="Search meetings..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-xs"
-        />
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="max-w-xs">
-            <SelectValue placeholder="Filter by category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Meeting List */}
-      <div className="grid gap-4">
-        {loading ? (
-          <div className="text-center py-8">Loading meetings...</div>
-        ) : filteredMeetings.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No meetings found</div>
-        ) : (
-          filteredMeetings.map((meeting) => (
-            <MeetingCard
-              key={meeting.id}
-              meeting={meeting}
-              onEdit={handleEditMeeting}
-              onDelete={handleDeleteMeeting}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Meeting Dialog */}
-      <MeetingDialog
-        isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setEditingMeeting(null);
-          setFormData(defaultFormData);
-        }}
-        onSubmit={handleSubmitMeeting}
-        formData={formData}
-        onFormChange={setFormData}
-        categories={categories}
-        isEditing={!!editingMeeting}
-      />
-    </div>
-  );
-
-  // Helper functions will be implemented next
-  function handleCreateMeeting() {
+  // Helper functions - defined before return statement
+  const handleCreateMeeting = useCallback(() => {
     setEditingMeeting(null);
     setFormData(defaultFormData);
     setIsDialogOpen(true);
-  }
+  }, []);
 
-  function handleEditMeeting(meeting: MeetingWithDetails) {
+  const handleEditMeeting = useCallback((meeting: MeetingWithDetails) => {
     setEditingMeeting(meeting);
     
     // Parse agenda safely
@@ -241,9 +179,9 @@ export default function MeetingManagement() {
       agenda: parsedAgenda
     });
     setIsDialogOpen(true);
-  }
+  }, []);
 
-  async function handleDeleteMeeting(id: string) {
+  const handleDeleteMeeting = useCallback(async (id: string) => {
     if (!confirm('Are you sure you want to delete this meeting?')) {
       return;
     }
@@ -260,9 +198,9 @@ export default function MeetingManagement() {
       console.error('Error deleting meeting:', error);
       toast.error('Failed to delete meeting');
     }
-  }
+  }, [meetingsService, loadMeetings]);
 
-  async function handleSubmitMeeting(data: MeetingFormData) {
+  const handleSubmitMeeting = useCallback(async (data: MeetingFormData) => {
     console.log('handleSubmitMeeting called with data:', data);
     
     try {
@@ -327,20 +265,125 @@ export default function MeetingManagement() {
       console.error('Error saving meeting:', error);
       toast.error('Failed to save meeting');
     }
-  }
+  }, [supabase, editingMeeting, meetingsService, loadMeetings]);
 
+  // Data fetching effects - run only once on mount
+  useEffect(() => {
+    loadMeetings();
+    loadCategories();
+    checkUserRole();
+  }, []); // Empty dependency array to run only once on mount
+
+  // Computed values - must be before return statement
+  const filteredMeetings = meetings.filter((meeting) => {
+    const matchesSearch = meeting.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (meeting.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === 'all' || meeting.category_id === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">
+          {userRole === 'admin' ? 'Meeting Management' : 'Meetings'}
+        </h1>
+        {userRole === 'admin' && (
+          <Button onClick={handleCreateMeeting}>
+            <Plus className="w-4 h-4 mr-2" />
+            Schedule Meeting
+          </Button>
+        )}
+      </div>
+      
+      {/* Filters */}
+      <div className="flex gap-4 mb-6">
+        <Input
+          placeholder="Search meetings..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-xs"
+        />
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="max-w-xs">
+            <SelectValue placeholder="Filter by category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Meeting List */}
+      <div className="grid gap-4">
+        {loading ? (
+          <div className="text-center py-8">Loading meetings...</div>
+        ) : filteredMeetings.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">No meetings found</div>
+        ) : (
+          filteredMeetings.map((meeting) => (
+            <MeetingCard
+              key={meeting.id}
+              meeting={meeting}
+              onEdit={userRole === 'admin' ? handleEditMeeting : undefined}
+              onDelete={userRole === 'admin' ? handleDeleteMeeting : undefined}
+              showFullDetails={true}
+              isAdmin={userRole === 'admin'}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Meeting Dialog - Only show for admin */}
+      {userRole === 'admin' && (
+        <MeetingDialog
+          isOpen={isDialogOpen}
+          onClose={() => {
+            setIsDialogOpen(false);
+            setEditingMeeting(null);
+            setFormData(defaultFormData);
+          }}
+          onSubmit={handleSubmitMeeting}
+          formData={formData}
+          onFormChange={setFormData}
+          categories={categories}
+          isEditing={!!editingMeeting}
+        />
+      )}
+    </div>
+  );
 }
 
 // Meeting Card Component
 interface MeetingCardProps {
   meeting: MeetingWithDetails;
-  onEdit: (meeting: MeetingWithDetails) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (meeting: MeetingWithDetails) => void;
+  onDelete?: (id: string) => void;
+  showFullDetails?: boolean;
+  isAdmin?: boolean;
 }
 
-function MeetingCard({ meeting, onEdit, onDelete }: MeetingCardProps) {
+function MeetingCard({ meeting, onEdit, onDelete, showFullDetails = false, isAdmin = false }: MeetingCardProps) {
   const meetingDate = meeting.meeting_date ? format(parseISO(meeting.meeting_date), 'PPP') : 'Date TBD';
   const meetingTime = meeting.meeting_date ? format(parseISO(meeting.meeting_date), 'p') : '';
+
+  // Parse agenda safely
+  let parsedAgenda: AgendaItem[] = [];
+  if (meeting.agenda && showFullDetails) {
+    try {
+      const agendaData = typeof meeting.agenda === 'string' 
+        ? JSON.parse(meeting.agenda) 
+        : meeting.agenda;
+      parsedAgenda = Array.isArray(agendaData) ? agendaData : [];
+    } catch (error) {
+      console.warn('Error parsing agenda:', error);
+    }
+  }
 
   return (
     <Card>
@@ -364,18 +407,24 @@ function MeetingCard({ meeting, onEdit, onDelete }: MeetingCardProps) {
               )}
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => onEdit(meeting)}>
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onDelete(meeting.id)}>
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+          {isAdmin && (
+            <div className="flex gap-2">
+              {onEdit && (
+                <Button variant="outline" size="sm" onClick={() => onEdit(meeting)}>
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button variant="outline" size="sm" onClick={() => onDelete(meeting.id)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {meeting.description && (
             <p className="text-gray-700">{meeting.description}</p>
           )}
@@ -385,6 +434,20 @@ function MeetingCard({ meeting, onEdit, onDelete }: MeetingCardProps) {
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
                 {meeting.location}
+              </div>
+            )}
+            
+            {meeting.meeting_link && (
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                <a 
+                  href={meeting.meeting_link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  Join Meeting
+                </a>
               </div>
             )}
             
@@ -399,7 +462,7 @@ function MeetingCard({ meeting, onEdit, onDelete }: MeetingCardProps) {
             
             {meeting.meeting_type && (
               <Badge variant="secondary">
-                {meeting.meeting_type}
+                {meeting.meeting_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </Badge>
             )}
           </div>
@@ -408,6 +471,36 @@ function MeetingCard({ meeting, onEdit, onDelete }: MeetingCardProps) {
             <div className="flex items-center gap-1 text-sm text-gray-600">
               <Users className="w-4 h-4" />
               Created by {meeting.creator.full_name || meeting.creator.email}
+            </div>
+          )}
+
+          {/* Show agenda for board members and admin */}
+          {showFullDetails && parsedAgenda.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Meeting Agenda
+              </h4>
+              <div className="space-y-2">
+                {parsedAgenda.map((item, index) => (
+                  <div key={item.id || index} className="border-l-2 border-blue-200 pl-3">
+                    <div className="flex justify-between items-start">
+                      <h5 className="font-medium text-sm">{item.title}</h5>
+                      <span className="text-xs text-gray-500 ml-2">
+                        {item.duration} min
+                      </span>
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-gray-600 mt-1">{item.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 pt-2 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  Total estimated time: {parsedAgenda.reduce((total, item) => total + (item.duration || 0), 0)} minutes
+                </p>
+              </div>
             </div>
           )}
         </div>
