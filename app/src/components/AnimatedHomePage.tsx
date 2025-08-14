@@ -112,20 +112,18 @@ export default function AnimatedHomePage() {
                   <a href="#features" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
                     Features
                   </a>
-                  <a href="#testimonials" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
-                    Testimonials
+                  <a href="#governance" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
+                    Governance
                   </a>
-                  <a href="#pricing" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
-                    Pricing
+                  <a href="#compliance" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
+                    Compliance
+                  </a>
+                  <a href="#about" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-all duration-300 hover:scale-105">
+                    About
                   </a>
                   <Link href="/auth/login">
                     <Button variant="outline" size="sm" className="transition-all duration-300 hover:scale-105 hover:shadow-lg">
                       Login
-                    </Button>
-                  </Link>
-                  <Link href="/auth/login">
-                    <Button size="sm" className="transition-all duration-300 hover:scale-105 hover:shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600">
-                      Join
                     </Button>
                   </Link>
                 </div>
@@ -138,18 +136,18 @@ export default function AnimatedHomePage() {
                     Login
                   </Button>
                 </Link>
-                <Link href="/auth/login">
-                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-xs px-3">
-                    Join
-                  </Button>
-                </Link>
               </div>
             </div>
           </div>
         </nav>
 
         {/* Hero Section with Animated Cards */}
-        <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 relative">
+        <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8 relative min-h-[85vh] flex items-center" style={{
+          backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1)), url("/images/futuristic-cityscape-hero.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 4%',
+          backgroundRepeat: 'no-repeat'
+        }}>
           {/* Floating animated cards in background - Hidden on mobile */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none hidden lg:block">
             <div className="absolute top-20 left-10 animate-float glass-effect rounded-2xl p-6 w-80 h-48 opacity-80">
@@ -195,22 +193,22 @@ export default function AnimatedHomePage() {
           <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center">
               <div className="animate-fade-up">
-                <Badge variant="secondary" className="mb-4 sm:mb-6 bg-blue-100/80 text-blue-700 hover:bg-blue-200/80 backdrop-blur-sm text-xs sm:text-sm">
+                <Badge variant="secondary" className="mb-4 sm:mb-6 bg-white/20 text-white hover:bg-white/30 backdrop-blur-md border border-white/30 text-xs sm:text-sm">
                   <Zap className="w-3 h-3 mr-1" />
                   It&apos;s time you own your board operations
                 </Badge>
               </div>
 
               <div className="animate-slide-left">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight px-2">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-6 sm:mb-8 leading-tight px-2 drop-shadow-lg">
                   It&apos;s time you own
                   <br />
-                  <span className="gradient-text">your governance</span>
+                  <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">your governance</span>
                 </h1>
               </div>
 
               <div className="animate-slide-right">
-                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4">
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-100 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4 drop-shadow-md">
                   Over 160 Proven Board Processes, Ready to Use — Built in collaboration with board leaders across sectors. Streamline governance, compliance, and strategic decision-making from day one.
                 </p>
               </div>
@@ -374,11 +372,9 @@ export default function AnimatedHomePage() {
                 <div className="flex items-start space-x-3 sm:space-x-4">
                   <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mt-1 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">160+ governance processes yearly</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">180+ governance processes yearly</h4>
                     <p className="text-gray-600 text-xs sm:text-sm">
-                      The full cost of governance is included. With advanced processes
-                      typically not covered by traditional tools. 5x more processes than
-                      an avg board platform.
+                    BoardMix streamlines 30+ essential governance processes — over 180 tasks each year  from meetings and resolutions to compliance and risk oversight, delivering far more than your average board secretary.
                     </p>
                   </div>
                 </div>
@@ -412,8 +408,7 @@ export default function AnimatedHomePage() {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Testing at Premium Locations</h4>
                     <p className="text-gray-600 text-xs sm:text-sm">
-                      Over 2,000 locations around the US. Platform visits average
-                      15 min.
+                    Empowering over 2,000 leaders and organizations across Sierra Leone to collaborate, decide, and grow effectively
                     </p>
                   </div>
                 </div>
@@ -468,11 +463,11 @@ export default function AnimatedHomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {[
                 {
-                  quote: "                  &quot;I am so impressed. I tested on a holiday Sunday and my period started/rescheduled and I got an answer within 5 minutes. Plus help scheduling. I&apos;m impressed with the lab info so far. I really love this more than I thought I would.&quot;",
+                  quote: "                  BoardMix has transformed the way our board operates. Finding and onboarding qualified members used to take months now it’s done in days. The platform’s course system also ensures our members are always up to date with compliance requirements.",
                   delay: '0s'
                 },
                 {
-                  quote: "                  &quot;I appreciate the detailed feedback regarding the test results, food, supplements, causes and why. It makes understanding my governance and making smart choices easier. - Mother of 4 in Kansas&quot;",
+                  quote: "                 Before BoardMix, managing board activities felt scattered and stressful. Now everything is in one place  from meeting notices to decision records  and our members feel more engaged than ever ",
                   delay: '0.2s'
                 },
                 {
@@ -500,16 +495,16 @@ export default function AnimatedHomePage() {
           </div>
         </section>
 
-        {/* Press Logos */}
+        {/* Client Logos */}
         <section className="py-16 bg-white/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center items-center space-x-12 opacity-60">
-              <div className="text-2xl font-bold text-gray-400">WSJ</div>
-              <div className="text-2xl font-bold text-gray-400">Forbes</div>
-              <div className="text-2xl font-bold text-gray-400">CNBC</div>
-              <div className="text-2xl font-bold text-gray-400">VOGUE</div>
-              <div className="text-2xl font-bold text-gray-400">FORTUNE</div>
-              <div className="text-2xl font-bold text-gray-400">AXIOS</div>
+            <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-8 lg:gap-12 opacity-60">
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-400">Board Mix</div>
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-400">Prime Height Legal</div>
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-400">CML</div>
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-400">Gentle Estate</div>
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-400">Rolling Stone</div>
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-400">Food Link Limited</div>
             </div>
           </div>
         </section>

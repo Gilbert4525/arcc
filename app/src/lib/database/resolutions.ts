@@ -280,22 +280,49 @@ export class ResolutionsService {
       // Map vote values to database format
       const voteValue = vote === 'approve' ? 'for' : vote === 'reject' ? 'against' : 'abstain';
 
-      // Use upsert to handle potential race conditions and duplicate votes
-      // This will either insert a new vote or update an existing one
-      const { data, error } = await this.supabase
+      // Check if user has already voted
+      const { data: existingVote } = await this.supabase
         .from('resolution_votes')
-        .upsert({
-          resolution_id: resolutionId,
-          voter_id: userId,
-          vote: voteValue,
-          vote_reason: comment || null,
-          voted_at: new Date().toISOString(),
-        }, {
-          onConflict: 'resolution_id,voter_id',
-          ignoreDuplicates: false // This will update if a duplicate exists
-        })
-        .select()
+        .select('id')
+        .eq('resolution_id', resolutionId)
+        .eq('voter_id', userId)
         .single();
+
+      let data, error;
+
+      if (existingVote) {
+        // Update existing vote
+        const result = await this.supabase
+          .from('resolution_votes')
+          .update({
+            vote: voteValue,
+            vote_reason: comment || null,
+            voted_at: new Date().toISOString(),
+          })
+          .eq('resolution_id', resolutionId)
+          .eq('voter_id', userId)
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+      } else {
+        // Insert new vote
+        const result = await this.supabase
+          .from('resolution_votes')
+          .insert({
+            resolution_id: resolutionId,
+            voter_id: userId,
+            vote: voteValue,
+            vote_reason: comment || null,
+            voted_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error('Error casting vote:', error);

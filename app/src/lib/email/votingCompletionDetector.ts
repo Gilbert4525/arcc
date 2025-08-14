@@ -51,10 +51,16 @@ export class VotingCompletionDetector {
         return this.createNotCompleteStatus();
       }
 
-      // Only check voting resolutions
-      if (resolution.status !== 'voting') {
-        console.log(`Resolution ${resolutionId} is not in voting status: ${resolution.status}`);
+      // Check if resolution is open for voting or already completed
+      if (!resolution.status || !['published', 'approved', 'rejected'].includes(resolution.status)) {
+        console.log(`Resolution ${resolutionId} is not available for voting completion check. Status: ${resolution.status || 'null'}`);
         return this.createNotCompleteStatus();
+      }
+
+      // If already approved/rejected, check if we need to send completion email
+      if (['approved', 'rejected'].includes(resolution.status)) {
+        console.log(`Resolution ${resolutionId} is already completed with status: ${resolution.status}`);
+        // Continue with completion check to potentially send email
       }
 
       // Get vote count
@@ -114,8 +120,8 @@ export class VotingCompletionDetector {
       }
 
       // Only check voting minutes
-      if (minutes.status !== 'voting') {
-        console.log(`Minutes ${minutesId} is not in voting status: ${minutes.status}`);
+      if (!minutes.status || minutes.status !== 'voting') {
+        console.log(`Minutes ${minutesId} is not in voting status: ${minutes.status || 'null'}`);
         return this.createNotCompleteStatus();
       }
 

@@ -30,6 +30,9 @@ import TestProductionGmailButton from '@/components/admin/TestProductionGmailBut
 import { DiagnoseGmailButton } from '@/components/admin/DiagnoseGmailButton';
 import { ValidateGmailConfigButton } from '@/components/admin/ValidateGmailConfigButton';
 import { QuickGmailTestButton } from '@/components/admin/QuickGmailTestButton';
+import { TestVotingSummarySystemButton } from '@/components/admin/TestVotingSummarySystemButton';
+import VotingCompletionProcessor from '@/components/admin/VotingCompletionProcessor';
+import TriggerCompletedResolutionEmail from '@/components/admin/TriggerCompletedResolutionEmail';
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -371,7 +374,10 @@ export default async function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <TestVotingSummaryButton />
+            <div className="space-y-4">
+              <TestVotingSummarySystemButton />
+              <TestVotingSummaryButton />
+            </div>
           </CardContent>
         </Card>
 
@@ -467,6 +473,12 @@ export default async function AdminPage() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Voting Completion Email Processor */}
+        <VotingCompletionProcessor />
+
+        {/* Trigger Email for Completed Resolution */}
+        <TriggerCompletedResolutionEmail />
       </div>
 
       {/* Additional Admin Tools */}

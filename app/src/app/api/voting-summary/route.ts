@@ -6,29 +6,41 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient();
     
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
     const body = await request.json();
-    const { type, id } = body;
+    const { type, itemId, id, trigger, force } = body;
+    
+    // Support both 'id' and 'itemId' for backwards compatibility
+    const resolvedId = itemId || id;
 
-    if (!type || !id) {
+    // Allow system calls (from voting completion detection) without authentication
+    const isSystemCall = trigger && (trigger === 'automatic' || trigger === 'vote_cast_fallback' || trigger === 'database_trigger');
+    
+    if (!isSystemCall) {
+      // Check authentication for manual calls
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      // Check if user is admin for manual calls
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.role !== 'admin') {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      }
+    } else {
+      console.log(`🤖 System call detected: ${trigger} - bypassing authentication`);
+    }
+
+    // Body parsing moved up for system call detection
+
+    if (!type || !resolvedId) {
       return NextResponse.json(
-        { error: 'Missing required fields: type and id' }, 
+        { error: 'Missing required fields: type and id/itemId' }, 
         { status: 400 }
       );
     }
@@ -40,17 +52,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🚀 Starting voting summary for ${type} with ID: ${id}`);
+    console.log(`🚀 Starting voting summary for ${type} with ID: ${resolvedId}${force ? ' (FORCED)' : ''}`);
     
     const votingSummaryService = new VotingSummaryEmailService(supabase);
     
     let success = false;
     if (type === 'resolution') {
       console.log('📧 Calling sendResolutionVotingSummary...');
-      success = await votingSummaryService.sendResolutionVotingSummary(id);
+      success = await votingSummaryService.sendResolutionVotingSummary(resolvedId);
     } else {
       console.log('📧 Calling sendMinutesVotingSummary...');
-      success = await votingSummaryService.sendMinutesVotingSummary(id);
+      success = await votingSummaryService.sendMinutesVotingSummary(resolvedId);
     }
 
     console.log(`✅ Voting summary service returned: ${success}`);

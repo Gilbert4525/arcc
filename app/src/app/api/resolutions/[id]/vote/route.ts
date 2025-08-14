@@ -113,10 +113,28 @@ export async function POST(
         
         if (completionStatus.isComplete) {
           console.log(`🎯 Resolution ${resolvedParams.id} voting completed: ${completionStatus.reason}`);
+          console.log(`📧 Voting summary email should have been triggered automatically`);
+        } else {
+          console.log(`⏳ Resolution ${resolvedParams.id} voting still in progress: ${completionStatus.totalVotes}/${completionStatus.totalEligibleVoters} votes`);
         }
       } catch (completionError) {
         // Don't fail the vote if completion detection fails
         console.error('Error checking voting completion:', completionError);
+        
+        // Try direct email service call as fallback
+        try {
+          const { VotingSummaryEmailService } = await import('@/lib/email/votingSummaryService');
+          const emailService = new VotingSummaryEmailService(supabase);
+          const emailSent = await emailService.sendResolutionVotingSummary(resolvedParams.id);
+          
+          if (emailSent) {
+            console.log('✅ Direct voting summary email sent successfully');
+          } else {
+            console.log('⚠️ Direct voting summary email failed - voting may not be complete yet');
+          }
+        } catch (fallbackError) {
+          console.error('❌ Direct voting summary email failed:', fallbackError);
+        }
       }
 
       return NextResponse.json({
