@@ -11,6 +11,15 @@ export default async function MeetingsPage() {
     redirect('/auth/login');
   }
 
+  // Check user role on server side
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  const userRole = profile?.role || 'board_member';
+
   // User is authenticated, proceed with page
 
   return (
@@ -22,7 +31,7 @@ export default async function MeetingsPage() {
         </p>
       </div>
       
-      <MeetingManagement />
+      <MeetingManagement initialUserRole={userRole} />
     </div>
   );
 }

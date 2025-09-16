@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "deploy:triggers": "node scripts/deploy-triggers.js",
-    "verify:env": "node scripts/verify-environment.js"
+    "verify:env": "node scripts/verify-environment.js",
+    "voting:listener": "node scripts/start-voting-listener.js",
+    "voting:test": "node scripts/test-voting-triggers.js",
+    "voting:deploy": "node scripts/deploy-voting-system.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

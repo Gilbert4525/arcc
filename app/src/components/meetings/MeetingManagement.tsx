@@ -63,7 +63,11 @@ const defaultFormData: MeetingFormData = {
   agenda: []
 };
 
-export default function MeetingManagement() {
+interface MeetingManagementProps {
+  initialUserRole?: string;
+}
+
+export default function MeetingManagement({ initialUserRole = 'board_member' }: MeetingManagementProps) {
   // State management
   const [meetings, setMeetings] = useState<MeetingWithDetails[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -73,7 +77,7 @@ export default function MeetingManagement() {
   const [formData, setFormData] = useState<MeetingFormData>(defaultFormData);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [userRole, setUserRole] = useState<string>('board_member');
+  const [userRole, setUserRole] = useState<string>(initialUserRole);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingWithDetails | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
@@ -526,7 +530,7 @@ function MeetingDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -743,7 +747,7 @@ function MeetingDetailsDialog({ isOpen, onClose, meeting }: MeetingDetailsDialog
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">{meeting.title}</DialogTitle>
