@@ -80,6 +80,9 @@ export default function MeetingManagement({ initialUserRole = 'board_member' }: 
   const [userRole, setUserRole] = useState<string>(initialUserRole);
   const [selectedMeeting, setSelectedMeeting] = useState<MeetingWithDetails | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  
+  // Track last submission time to prevent rapid double-clicks
+  const [lastSubmissionTime, setLastSubmissionTime] = useState(0);
 
   // Initialize services
   const supabase = createClient();
@@ -208,23 +211,53 @@ export default function MeetingManagement({ initialUserRole = 'board_member' }: 
 
   const handleSubmitMeeting = useCallback(async (data: MeetingFormData) => {
     console.log('handleSubmitMeeting called with data:', data);
+    console.log('Starting meeting submission process');
+    
+    // Prevent rapid double-clicks
+    const now = Date.now();
+    if ((now - lastSubmissionTime) < 1000) return;
+    setLastSubmissionTime(now);
     
     try {
+      // Enhanced validation with specific error messages
+      if (!data.title?.trim()) {
+        toast.error('Meeting title is required');
+        throw new Error('Meeting title is required');
+      }
+      
+      if (!data.meeting_date) {
+        toast.error('Meeting date and time is required');
+        throw new Error('Meeting date and time is required');
+      }
+      
+      // Validate date is not in the past
+      const meetingDate = new Date(data.meeting_date);
+      const now = new Date();
+      if (meetingDate < now) {
+        toast.error('Meeting date cannot be in the past');
+        throw new Error('Meeting date cannot be in the past');
+      }
+      
+      if (data.duration_minutes < 15) {
+        toast.error('Meeting duration must be at least 15 minutes');
+        throw new Error('Meeting duration must be at least 15 minutes');
+      }
+
       // Get the current user ID
       const { data: userData, error: userError } = await supabase.auth.getUser();
       
       if (userError || !userData.user) {
         toast.error('You must be logged in to create a meeting');
-        return;
+        throw new Error('You must be logged in to create a meeting');
       }
       
       const meetingData = {
-        title: data.title,
-        description: data.description || null,
+        title: data.title.trim(),
+        description: data.description?.trim() || null,
         meeting_date: data.meeting_date,
-        location: data.location || null,
-        meeting_link: data.meeting_link || null,
-        duration_minutes: data.duration_minutes || 60, // Ensure this has a default value
+        location: data.location?.trim() || null,
+        meeting_link: data.meeting_link?.trim() || null,
+        duration_minutes: data.duration_minutes || 60,
         category_id: data.category_id || null,
         meeting_type: data.meeting_type || 'board_meeting',
         is_recurring: data.is_recurring || false,
@@ -239,10 +272,11 @@ export default function MeetingManagement({ initialUserRole = 'board_member' }: 
           toast.success('Meeting updated successfully');
         } else {
           toast.error('Failed to update meeting');
-          return;
+          throw new Error('Failed to update meeting');
         }
       } else {
         // Use API endpoint to create meeting (this will automatically add participants)
+        console.log('Making API call to create meeting');
         const response = await fetch('/api/meetings', {
           method: 'POST',
           headers: {
@@ -255,7 +289,7 @@ export default function MeetingManagement({ initialUserRole = 'board_member' }: 
         if (!response.ok) {
           const errorData = await response.json();
           toast.error(errorData.error || 'Failed to create meeting');
-          return;
+          throw new Error(errorData.error || 'Failed to create meeting');
         }
 
         const responseData = await response.json();
@@ -263,6 +297,7 @@ export default function MeetingManagement({ initialUserRole = 'board_member' }: 
         toast.success('Meeting created successfully');
       }
 
+      // Reset form and close dialog
       setIsDialogOpen(false);
       setEditingMeeting(null);
       setFormData(defaultFormData);
@@ -271,7 +306,7 @@ export default function MeetingManagement({ initialUserRole = 'board_member' }: 
       console.error('Error saving meeting:', error);
       toast.error('Failed to save meeting');
     }
-  }, [supabase, editingMeeting, meetingsService, loadMeetings]);
+  }, [supabase, editingMeeting, meetingsService, loadMeetings, lastSubmissionTime, setLastSubmissionTime]);
 
   const handleViewDetails = useCallback((meeting: MeetingWithDetails) => {
     setSelectedMeeting(meeting);
@@ -482,7 +517,7 @@ function MeetingCard({ meeting, onEdit, onDelete, onViewDetails, isAdmin = false
 interface MeetingDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: MeetingFormData) => void;
+  onSubmit: (data: MeetingFormData) => Promise<void>;
   formData: MeetingFormData;
   onFormChange: (data: MeetingFormData) => void;
   categories: Category[];
@@ -498,9 +533,24 @@ function MeetingDialog({
   categories, 
   isEditing 
 }: MeetingDialogProps) {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    e.stopPropagation();
+    
+    // Prevent double submission
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      // Error is already handled in the onSubmit function with toast
+      console.error('Form submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const updateFormData = (updates: Partial<MeetingFormData>) => {
@@ -546,6 +596,7 @@ function MeetingDialog({
                 id="title"
                 value={formData.title}
                 onChange={(e) => updateFormData({ title: e.target.value })}
+                className={!formData.title.trim() ? 'border-red-300' : ''}
                 required
               />
             </div>
@@ -557,6 +608,7 @@ function MeetingDialog({
                 type="datetime-local"
                 value={formData.meeting_date}
                 onChange={(e) => updateFormData({ meeting_date: e.target.value })}
+                className={!formData.meeting_date ? 'border-red-300' : ''}
                 required
               />
             </div>
@@ -710,8 +762,8 @@ function MeetingDialog({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">
-              {isEditing ? 'Update Meeting' : 'Schedule Meeting'}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : (isEditing ? 'Update Meeting' : 'Schedule Meeting')}
             </Button>
           </div>
         </form>

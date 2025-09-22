@@ -116,6 +116,23 @@ export function ResolutionManagement({
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
 
+  // Form state for creating resolutions
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    content: '',
+    resolution_type: '',
+    category_id: '',
+    voting_deadline: '',
+    requires_majority: true,
+    minimum_quorum: 50,
+    total_eligible_voters: 1,
+    tags: ''
+  });
+  
+  // Track last submission time to prevent rapid double-clicks
+  const [lastSubmissionTime, setLastSubmissionTime] = useState(0);
+
   const supabase = createClient();
 
   // Real-time subscription for resolution changes
@@ -279,20 +296,57 @@ export function ResolutionManagement({
     }
   };
 
-  const handleAddResolution = async (formData: FormData) => {
+  const handleAddResolution = async () => {
+    console.log('handleAddResolution called');
+    
+    // Prevent multiple submissions and rapid double-clicks
+    const now = Date.now();
+    if (loading || (now - lastSubmissionTime) < 1000) {
+      console.log('Submission blocked - loading or too soon');
+      return;
+    }
+    
+    setLastSubmissionTime(now);
     setLoading(true);
+    console.log('Starting resolution creation process');
 
     try {
-      const title = formData.get('title') as string;
-      const description = formData.get('description') as string;
-      const content = formData.get('content') as string;
-      const resolution_type = formData.get('resolution_type') as 'board_resolution' | 'committee_resolution' | 'special_resolution';
-      const category_id = formData.get('category_id') as string;
-      const voting_deadline = formData.get('voting_deadline') as string;
-      const requires_majority = formData.get('requires_majority') === 'on';
-      const minimum_quorum = parseInt(formData.get('minimum_quorum') as string) || 50;
-      const total_eligible_voters = parseInt(formData.get('total_eligible_voters') as string) || 1;
-      const tagsString = formData.get('tags') as string;
+      const { title, description, content, resolution_type, category_id, voting_deadline, requires_majority, minimum_quorum, total_eligible_voters, tags: tagsString } = formData;
+      
+      // Enhanced validation with specific error messages
+      console.log('Validating form data:', { title, content, resolution_type });
+      
+      if (!title?.trim()) {
+        console.log('Validation failed: title missing');
+        toast.error('Resolution title is required');
+        setLoading(false);
+        return;
+      }
+      
+      if (!content?.trim()) {
+        toast.error('Resolution content is required');
+        setLoading(false);
+        return;
+      }
+      
+      if (!resolution_type) {
+        toast.error('Please select a resolution type');
+        setLoading(false);
+        return;
+      }
+
+      if (total_eligible_voters < 1) {
+        toast.error('Eligible voters must be at least 1');
+        setLoading(false);
+        return;
+      }
+
+      if (minimum_quorum < 1 || minimum_quorum > 100) {
+        toast.error('Minimum quorum must be between 1 and 100 percent');
+        setLoading(false);
+        return;
+      }
+
       const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()).filter(Boolean) : null;
 
       // Retry logic for resolution creation in case of duplicate numbers
@@ -305,15 +359,23 @@ export function ResolutionManagement({
           const resolution_number = await generateResolutionNumber(retryCount);
 
           // Use the API endpoint instead of direct database access
+          console.log('Making API call to create resolution with data:', {
+            title: title.trim(),
+            resolution_type,
+            total_eligible_voters,
+            requires_majority,
+            minimum_quorum
+          });
           const response = await fetch('/api/resolutions', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({
-              title,
-              description: description || null,
-              content,
+              title: title.trim(),
+              description: description?.trim() || null,
+              content: content.trim(),
               resolution_number,
               resolution_type,
               category_id: category_id || null,
@@ -328,31 +390,53 @@ export function ResolutionManagement({
             }),
           });
 
-          const result = await response.json();
-
-          if (response.ok) {
-            success = true;
-            setIsAddDialogOpen(false);
-            toast.success('Resolution created successfully');
-          } else if (result.error && result.error.includes('duplicate key')) {
-            // If it's a duplicate key error, retry with a different number
-            retryCount++;
-            if (retryCount >= maxRetries) {
-              toast.error('Failed to create resolution: Unable to generate unique resolution number');
+          if (!response.ok) {
+            const result = await response.json();
+            if (result.error && result.error.includes('duplicate key')) {
+              // If it's a duplicate key error, retry with a different number
+              retryCount++;
+              if (retryCount >= maxRetries) {
+                toast.error('Failed to create resolution: Unable to generate unique resolution number');
+                setLoading(false);
+                return;
+              }
+              continue; // Try again with new number
+            } else {
+              // For other errors, don't retry
+              toast.error(`Failed to create resolution: ${result.error || 'Unknown error'}`);
+              setLoading(false);
               return;
             }
-          } else {
-            // For other errors, don't retry
-            toast.error(`Failed to create resolution: ${result.error || 'Unknown error'}`);
-            return;
           }
+
+          const result = await response.json();
+          success = true;
+          
+          // Reset form and close dialog
+          setFormData({
+            title: '',
+            description: '',
+            content: '',
+            resolution_type: '',
+            category_id: '',
+            voting_deadline: '',
+            requires_majority: true,
+            minimum_quorum: 50,
+            total_eligible_voters: 1,
+            tags: ''
+          });
+          setIsAddDialogOpen(false);
+          toast.success('Resolution created successfully');
+          
         } catch (error) {
           console.error('Error creating resolution:', error);
           toast.error('Failed to create resolution: Network error');
+          setLoading(false);
           return;
         }
       }
-    } catch {
+    } catch (error) {
+      console.error('Unexpected error in handleAddResolution:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -647,19 +731,32 @@ export function ResolutionManagement({
 
                 <form onSubmit={async (e) => {
                   e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  await handleAddResolution(formData);
+                  e.stopPropagation();
+                  
+                  // Prevent double submission
+                  if (loading) return;
+                  
+                  await handleAddResolution();
                 }} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="title">Resolution Title *</Label>
-                      <Input id="title" name="title" required />
+                      <Input 
+                        id="title" 
+                        value={formData.title}
+                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                        required 
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="resolution_type">Resolution Type *</Label>
-                      <Select name="resolution_type" required>
-                        <SelectTrigger>
+                      <Select 
+                        value={formData.resolution_type} 
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, resolution_type: value }))}
+                        required
+                      >
+                        <SelectTrigger className={!formData.resolution_type ? 'border-red-300' : ''}>
                           <SelectValue placeholder="Select resolution type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -677,7 +774,8 @@ export function ResolutionManagement({
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
-                      name="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Brief description of the resolution"
                       rows={2}
                     />
@@ -687,7 +785,8 @@ export function ResolutionManagement({
                     <Label htmlFor="content">Resolution Content *</Label>
                     <Textarea
                       id="content"
-                      name="content"
+                      value={formData.content}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                       placeholder="Full text of the resolution, including whereas clauses and resolved statements"
                       rows={8}
                       required
@@ -697,7 +796,10 @@ export function ResolutionManagement({
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="category_id">Category</Label>
-                      <Select name="category_id">
+                      <Select 
+                        value={formData.category_id} 
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -715,8 +817,9 @@ export function ResolutionManagement({
                       <Label htmlFor="voting_deadline">Voting Deadline</Label>
                       <Input
                         id="voting_deadline"
-                        name="voting_deadline"
                         type="datetime-local"
+                        value={formData.voting_deadline}
+                        onChange={(e) => setFormData(prev => ({ ...prev, voting_deadline: e.target.value }))}
                       />
                     </div>
 
@@ -724,9 +827,9 @@ export function ResolutionManagement({
                       <Label htmlFor="total_eligible_voters">Eligible Voters *</Label>
                       <Input
                         id="total_eligible_voters"
-                        name="total_eligible_voters"
                         type="number"
-                        defaultValue="1"
+                        value={formData.total_eligible_voters}
+                        onChange={(e) => setFormData(prev => ({ ...prev, total_eligible_voters: parseInt(e.target.value) || 1 }))}
                         min="1"
                         required
                       />
@@ -738,16 +841,20 @@ export function ResolutionManagement({
                       <Label htmlFor="minimum_quorum">Minimum Quorum (%)</Label>
                       <Input
                         id="minimum_quorum"
-                        name="minimum_quorum"
                         type="number"
-                        defaultValue="50"
+                        value={formData.minimum_quorum}
+                        onChange={(e) => setFormData(prev => ({ ...prev, minimum_quorum: parseInt(e.target.value) || 50 }))}
                         min="1"
                         max="100"
                       />
                     </div>
 
                     <div className="flex items-center space-x-2 pt-6">
-                      <Switch id="requires_majority" name="requires_majority" defaultChecked />
+                      <Switch 
+                        id="requires_majority" 
+                        checked={formData.requires_majority}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requires_majority: checked }))}
+                      />
                       <Label htmlFor="requires_majority">Requires Majority Vote</Label>
                     </div>
                   </div>
@@ -756,17 +863,32 @@ export function ResolutionManagement({
                     <Label htmlFor="tags">Tags (comma-separated)</Label>
                     <Input
                       id="tags"
-                      name="tags"
+                      value={formData.tags}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                       placeholder="governance, finance, policy"
                     />
                   </div>
 
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    <Button type="button" variant="outline" onClick={() => {
+                      setIsAddDialogOpen(false);
+                      setFormData({
+                        title: '',
+                        description: '',
+                        content: '',
+                        resolution_type: '',
+                        category_id: '',
+                        voting_deadline: '',
+                        requires_majority: true,
+                        minimum_quorum: 50,
+                        total_eligible_voters: 1,
+                        tags: ''
+                      });
+                    }}>
                       Cancel
                     </Button>
                     <Button type="submit" disabled={loading}>
-                      Create Resolution
+                      {loading ? 'Creating...' : 'Create Resolution'}
                     </Button>
                   </DialogFooter>
                 </form>
