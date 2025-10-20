@@ -57,7 +57,7 @@ export default async function PassedResolutionDocumentsPage() {
       initialDocuments={documents || []}
       categories={categories || []}
       userId={user.id}
-      userRole={profile.role}
+      userRole={profile.role || 'board_member'}
     />
   );
 }
