@@ -8,6 +8,12 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Users,
   FileText,
   Calendar,
@@ -21,6 +27,8 @@ import {
   ChevronRight,
   LogOut,
   FileCheck,
+  ChevronDown,
+  ScrollText,
 } from 'lucide-react';
 
 const navigationItems = [
@@ -48,18 +56,7 @@ const navigationItems = [
     icon: Calendar,
     roles: ['admin', 'board_member'],
   },
-  {
-    title: 'Resolutions',
-    href: '/dashboard/resolutions',
-    icon: Gavel,
-    roles: ['admin', 'board_member'],
-  },
-  {
-    title: 'Minutes',
-    href: '/dashboard/minutes',
-    icon: FileCheck,
-    roles: ['admin', 'board_member'],
-  },
+
   {
     title: 'Categories',
     href: '/dashboard/categories',
@@ -89,6 +86,48 @@ const navigationItems = [
     href: '/dashboard/settings',
     icon: Settings,
     roles: ['admin', 'board_member'],
+  },
+];
+
+const resolutionItems = [
+  {
+    title: 'Pending Resolution',
+    href: '/dashboard/resolutions',
+    icon: Gavel,
+    roles: ['admin', 'board_member'],
+  },
+  {
+    title: 'Passed Resolution Documents',
+    href: '/dashboard/resolutions/documents',
+    icon: ScrollText,
+    roles: ['admin', 'board_member'],
+  },
+  {
+    title: 'Upload Resolution Documents',
+    href: '/dashboard/resolutions/documents/upload',
+    icon: Upload,
+    roles: ['admin'],
+  },
+];
+
+const minutesItems = [
+  {
+    title: 'Minutes Management',
+    href: '/dashboard/minutes',
+    icon: FileCheck,
+    roles: ['admin', 'board_member'],
+  },
+  {
+    title: 'Minutes Documents',
+    href: '/dashboard/minutes/documents',
+    icon: FileText,
+    roles: ['admin', 'board_member'],
+  },
+  {
+    title: 'Upload Minutes Documents',
+    href: '/dashboard/minutes/documents/upload',
+    icon: Upload,
+    roles: ['admin'],
   },
 ];
 
@@ -123,9 +162,9 @@ export function DashboardSidebar() {
           <div className="flex items-center justify-between">
             {!isCollapsed && (
               <Link href="/" className="flex items-center space-x-2">
-                <img 
-                  src="/boardmix-logo.svg" 
-                  alt="Arc Board Management" 
+                <img
+                  src="/boardmix-logo.svg"
+                  alt="Arc Board Management"
                   className="h-8 w-8"
                 />
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -135,9 +174,9 @@ export function DashboardSidebar() {
             )}
             {isCollapsed && (
               <Link href="/" className="flex items-center justify-center">
-                <img 
-                  src="/boardmix-logo.svg" 
-                  alt="Arc Board Management" 
+                <img
+                  src="/boardmix-logo.svg"
+                  alt="Arc Board Management"
                   className="h-8 w-8"
                 />
               </Link>
@@ -182,6 +221,126 @@ export function DashboardSidebar() {
                 </li>
               );
             })}
+
+            {/* Resolutions Dropdown */}
+            <li>
+              {isCollapsed ? (
+                <Link
+                  href="/dashboard/resolutions"
+                  className={cn(
+                    'flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                    pathname.startsWith('/dashboard/resolutions')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  )}
+                >
+                  <Gavel className="h-5 w-5" />
+                </Link>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        'w-full justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                        pathname.startsWith('/dashboard/resolutions')
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      )}
+                    >
+                      <div className="flex items-center">
+                        <Gavel className="h-5 w-5 mr-3" />
+                        <span>Resolutions</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    {resolutionItems
+                      .filter(item => item.roles.includes(user?.role || 'board_member'))
+                      .map((item) => {
+                        const Icon = item.icon;
+                        const isActive = pathname === item.href;
+
+                        return (
+                          <DropdownMenuItem key={item.href} asChild>
+                            <Link
+                              href={item.href}
+                              className={cn(
+                                'flex items-center px-2 py-2 text-sm cursor-pointer',
+                                isActive && 'bg-primary/10 text-primary font-medium'
+                              )}
+                            >
+                              <Icon className="h-4 w-4 mr-3" />
+                              <span>{item.title}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </li>
+
+            {/* Minutes Dropdown */}
+            <li>
+              {isCollapsed ? (
+                <Link
+                  href="/dashboard/minutes"
+                  className={cn(
+                    'flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                    pathname.startsWith('/dashboard/minutes')
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  )}
+                >
+                  <FileCheck className="h-5 w-5" />
+                </Link>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        'w-full justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+                        pathname.startsWith('/dashboard/minutes')
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      )}
+                    >
+                      <div className="flex items-center">
+                        <FileCheck className="h-5 w-5 mr-3" />
+                        <span>Minutes</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    {minutesItems
+                      .filter(item => item.roles.includes(user?.role || 'board_member'))
+                      .map((item) => {
+                        const Icon = item.icon;
+                        const isActive = pathname === item.href;
+
+                        return (
+                          <DropdownMenuItem key={item.href} asChild>
+                            <Link
+                              href={item.href}
+                              className={cn(
+                                'flex items-center px-2 py-2 text-sm cursor-pointer',
+                                isActive && 'bg-primary/10 text-primary font-medium'
+                              )}
+                            >
+                              <Icon className="h-4 w-4 mr-3" />
+                              <span>{item.title}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </li>
           </ul>
         </nav>
 

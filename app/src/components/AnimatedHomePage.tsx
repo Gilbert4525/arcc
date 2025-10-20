@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   CheckCircle,
   FileText,
@@ -16,6 +18,25 @@ import {
 } from 'lucide-react';
 
 export default function AnimatedHomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  const handleResultsTracking = () => {
+    if (loading) return; // Don't navigate while loading
+    
+    if (user) {
+      // User is logged in, redirect to dashboard based on role
+      if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
+    } else {
+      // User is not logged in, redirect to login
+      router.push('/auth/login');
+    }
+  };
+
   return (
     <>
       {/* Add custom CSS for animations */}
@@ -228,14 +249,14 @@ export default function AnimatedHomePage() {
         <section className="py-6 sm:py-8 bg-white/50 backdrop-blur-sm border-y border-gray-200/50 overflow-hidden">
           <div className="whitespace-nowrap">
             <div className="animate-marquee inline-block">
-              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Monitor for early indicators of</span>
-              <span className="text-sm sm:text-base lg:text-lg font-semibold text-orange-600 mx-2 sm:mx-4">thousands of governance issues.</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Board document</span>
+              <span className="text-sm sm:text-base lg:text-lg font-semibold text-orange-600 mx-2 sm:mx-4">board resolution management</span>
               <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Board Efficiency</span>
-              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Meeting Management</span>
-              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Document Control</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Meeting Scheduling</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">transparent digital voting</span>
               <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Resolution Tracking</span>
-              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Compliance Monitoring</span>
-              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">Audit Trails</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">User Friendly</span>
+              <span className="text-sm sm:text-base lg:text-lg text-gray-600 mx-4 sm:mx-8">E-governance</span>
             </div>
           </div>
         </section>
@@ -245,9 +266,9 @@ export default function AnimatedHomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12">
               {[
-                'Document Management', 'Meeting Coordination', 'Resolution Tracking',
-                'Compliance Monitoring', 'Audit Trails', 'Digital Voting',
-                'Board Analytics', 'Workflow Automation', 'Security Controls'
+                'Document Management', 'Meeting Scheduling', 'Resolution Tracking',
+                'transparent digital voting', 'Board Efficiency', 'All in one access for members',
+                'Board Analytics', 'E-governance', 'Security Controls'
               ].map((feature, index) => (
                 <div
                   key={feature}
@@ -265,8 +286,8 @@ export default function AnimatedHomePage() {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse-slow">
                   <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold mb-2">Document Intelligence</h3>
-                <p className="text-gray-600 text-sm sm:text-base">AI-powered document analysis and automated categorization</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">All board document in one place</h3>
+                <p className="text-gray-600 text-sm sm:text-base">Keep every board document organized, accessible, and secure in one central hub</p>
               </div>
 
               <div className="animate-fade-up glass-effect rounded-2xl p-6 sm:p-8 text-center hover:scale-105 transition-all duration-500" style={{ animationDelay: '0.2s' }}>
@@ -293,9 +314,9 @@ export default function AnimatedHomePage() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="animate-fade-up">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-                Results tracked
+                Stay ahead with
                 <br />
-                over your <span className="gradient-text">lifetime.</span>
+                real-time board performance <span className="gradient-text">tracking.</span>
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
                 Stay aware of how your board is changing.
@@ -307,29 +328,66 @@ export default function AnimatedHomePage() {
             </div>
 
             <div className="animate-slide-left mt-8 sm:mt-16">
-              <Badge variant="outline" className="mb-6 sm:mb-8 text-gray-600 border-gray-300 text-xs sm:text-sm">
+              <Badge 
+                variant="outline" 
+                className="mb-6 sm:mb-8 text-gray-600 border-gray-300 text-xs sm:text-sm cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={handleResultsTracking}
+              >
                 Results Tracking
               </Badge>
 
-              {/* Animated chart placeholder */}
-              <div className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-12 max-w-2xl mx-auto">
-                <div className="flex items-center justify-between mb-6 sm:mb-8">
-                  <div className="text-left">
-                    <div className="text-xs sm:text-sm text-gray-600 mb-1">Board Efficiency Score</div>
-                    <div className="text-xs text-gray-500">Optimal Range: 85 to 95 points</div>
+              {/* Before and After Board Efficiency Scores */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
+                {/* Before BoardMix */}
+                <div className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-8">
+                  <div className="text-center mb-4">
+                    <div className="text-sm text-gray-500 mb-2">Before BoardMix</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl sm:text-4xl font-bold text-orange-600 animate-pulse-slow">92</div>
-                    <div className="text-xs sm:text-sm text-gray-600">points</div>
+                  <div className="flex items-center justify-between mb-6 sm:mb-8">
+                    <div className="text-left">
+                      <div className="text-xs sm:text-sm text-gray-600 mb-1">Board Efficiency Score</div>
+                      <div className="text-xs text-gray-500">Optimal Range: 85 to 95 points</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl sm:text-4xl font-bold text-red-500 animate-pulse-slow">18</div>
+                      <div className="text-xs sm:text-sm text-gray-600">points</div>
+                    </div>
+                  </div>
+
+                  {/* Animated progress line - Before */}
+                  <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full animate-pulse-slow" style={{ width: '18%' }}></div>
+                    <div className="absolute left-16 top-0 w-3 h-3 bg-gray-800 rounded-full transform -translate-y-0.5">
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                        DEC, 2024
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Animated progress line */}
-                <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full animate-pulse-slow" style={{ width: '92%' }}></div>
-                  <div className="absolute right-8 top-0 w-3 h-3 bg-gray-800 rounded-full transform -translate-y-0.5">
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded">
-                      JAN, 2025
+                {/* After BoardMix */}
+                <div className="glass-effect rounded-2xl sm:rounded-3xl p-6 sm:p-8">
+                  <div className="text-center mb-4">
+                    <div className="text-sm text-gray-500 mb-2">After BoardMix</div>
+                  </div>
+                  <div className="flex items-center justify-between mb-6 sm:mb-8">
+                    <div className="text-left">
+                      <div className="text-xs sm:text-sm text-gray-600 mb-1">Board Efficiency Score</div>
+                      <div className="text-xs text-gray-500">Optimal Range: 85 to 95 points</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl sm:text-4xl font-bold text-orange-600 animate-pulse-slow">92</div>
+                      <div className="text-xs sm:text-sm text-gray-600">points</div>
+                    </div>
+                  </div>
+
+                  {/* Animated progress line - After */}
+                  <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full animate-pulse-slow" style={{ width: '92%' }}></div>
+                    <div className="absolute right-8 top-0 w-3 h-3 bg-gray-800 rounded-full transform -translate-y-0.5">
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                        JAN, 2025
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -422,7 +480,7 @@ export default function AnimatedHomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12 sm:mb-16">
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-                <span className="gradient-text">160+</span> Proven Board Processes
+                <span className="gradient-text">Corporate</span> Governance Made Easy
               </h2>
               <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
                 Built in collaboration with board leaders across sectors — everything you need for effective governance.
