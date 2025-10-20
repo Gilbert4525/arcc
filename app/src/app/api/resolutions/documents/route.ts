@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       .from('documents')
       .select(`
         *,
-        profiles:created_by(full_name, email),
+        profiles!documents_created_by_fkey(full_name, email),
         categories(name, color)
       `)
       .or('tags.cs.{"passed_resolution"},tags.cs.{"resolution"}') // Filter for resolution documents

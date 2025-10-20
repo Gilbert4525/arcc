@@ -27,7 +27,7 @@ export default async function MinutesDocumentsPage() {
     .from('documents')
     .select(`
       *,
-      profiles:created_by(full_name, email),
+      profiles!documents_created_by_fkey(full_name, email),
       categories(name, color)
     `)
     .or('tags.cs.{"minutes"},tags.cs.{"meeting_minutes"}') // Filter for minutes documents
