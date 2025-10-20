@@ -67,7 +67,7 @@ import { format } from 'date-fns';
 
 type Document = Database['public']['Tables']['documents']['Row'] & {
   profiles?: { full_name: string | null; email: string } | null;
-  categories?: { name: string; color: string } | null;
+  categories?: { name: string; color: string | null } | null;
 };
 
 type Category = Database['public']['Tables']['categories']['Row'];
@@ -478,7 +478,7 @@ export function PassedResolutionDocuments({
                         {document.categories ? (
                           <Badge
                             variant="secondary"
-                            style={{ backgroundColor: `${document.categories.color}20` }}
+                            style={{ backgroundColor: `${document.categories.color || '#6B7280'}20` }}
                           >
                             {document.categories.name}
                           </Badge>
