@@ -82,6 +82,12 @@ const navigationItems = [
     roles: ['admin'],
   },
   {
+    title: 'Voting Emails',
+    href: '/admin/voting-emails',
+    icon: ScrollText,
+    roles: ['admin'],
+  },
+  {
     title: 'Settings',
     href: '/dashboard/settings',
     icon: Settings,
